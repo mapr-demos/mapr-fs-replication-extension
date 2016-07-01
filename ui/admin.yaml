@@ -1,0 +1,137 @@
+# this is the MapR file replication administrative interface
+swagger: '2.0'
+info:
+  title: MapR File Replication Admin
+  description: Administer live file replication coming to this cluster
+  version: "1.0.0"
+# the domain of the service
+host: api.mapr.com
+# array of all schemes that your API supports
+schemes:
+  - https
+# will be prefixed to all paths
+basePath: /v1
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /cluster/{cluster_id}:
+    get:
+      summary: Returns a single cluster
+      description: The details about a single cluster
+      parameters:
+        - name: cluster_id
+          in: path
+          description: Gets a description of a cluster object
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Data for this cluster
+          schema:
+            $ref: '#/definitions/Cluster'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /clusters:
+    get:
+      summary: Known clusters
+      description: The clusters endpoint returns info about the clusters that are known to the current cluster
+      responses:
+        200:
+          description: An array of clusters
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Cluster'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /volumes:
+    get:
+      summary: Currently replicating volumes
+      description: The volumes that this node is currently replicating
+      responses:
+        200:
+          description: An array of volumes
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Volume'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /volume/{volume_name}:
+    post:
+      summary: Controls replication of a volume
+      description: Allows volume replication to be controlled
+      parameters:
+        - name: volume_name
+          in: path
+          description: The volumn name
+          required: true
+          type: string
+        - name: volume_config
+          in: body
+          description: The configuration of the volume
+          required: true
+          schema:
+            $ref: '#/definitions/Volume'
+              
+      responses:
+        200:
+          description: 'A response message, typically OK'
+          schema:
+            type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+            
+definitions:
+  Cluster:
+    type: object
+    properties:
+      name:
+        type: string
+        description: The name of the cluster
+  Volume:
+    type: object
+    properties:
+      source_cluster:
+        type: string
+        description: The cluster this volume is replicated from
+      name:
+        type: string
+        description: The name of the volume on the source side
+      local_path:
+        type: string
+        description: Where the image of the volume should be placed
+      paused:
+        type: boolean
+        description: "Set to true if the replication has been paused"
+      seconds_behind:
+        type: integer
+        description: How far behind real-time this replica is
+      last_change:
+        description: When was the last change event processed?
+        type: integer
+        format: int64
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
