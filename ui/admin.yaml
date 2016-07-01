@@ -16,26 +16,6 @@ consumes:
 produces:
   - application/json
 paths:
-  /cluster/{cluster_id}:
-    get:
-      summary: Returns a single cluster
-      description: The details about a single cluster
-      parameters:
-        - name: cluster_id
-          in: path
-          description: Gets a description of a cluster object
-          required: true
-          type: integer
-          format: int64
-      responses:
-        200:
-          description: Data for this cluster
-          schema:
-            $ref: '#/definitions/Cluster'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
   /clusters:
     get:
       summary: Known clusters
@@ -47,6 +27,25 @@ paths:
             type: array
             items:
               $ref: '#/definitions/Cluster'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /cluster/{cluster_name}:
+    get:
+      summary: Returns a single cluster
+      description: The details about a single cluster
+      parameters:
+        - name: cluster_name
+          in: path
+          description: The name of the cluster to fetch
+          required: true
+          type: string
+      responses:
+        200:
+          description: Data for this cluster
+          schema:
+            $ref: '#/definitions/Cluster'
         default:
           description: Unexpected error
           schema:
@@ -97,12 +96,20 @@ paths:
             
 definitions:
   Cluster:
+    description: A description of a cluster, including any replicated volumes
     type: object
     properties:
       name:
         type: string
         description: The name of the cluster
+      volumes:
+        description: The volumes from this cluster being replicated
+        type: array
+        items:
+          $ref: '#/definitions/Volume'
+            
   Volume:
+    description: The details about a single volume
     type: object
     properties:
       source_cluster:
@@ -116,7 +123,7 @@ definitions:
         description: Where the image of the volume should be placed
       paused:
         type: boolean
-        description: "Set to true if the replication has been paused"
+        description: Set to true if the replication has been paused
       seconds_behind:
         type: integer
         description: How far behind real-time this replica is
