@@ -39,11 +39,13 @@ public class Monitor {
             public String messageKey(Path root, Path file) {
                 return root.toString();
             }
-        }, DIRECTORY {
+        },
+        DIRECTORY {
             public String messageKey(Path root, Path file) {
                 return file.getParent().toString();
             }
-        }, FILE {
+        },
+        FILE {
             public String messageKey(Path root, Path file) {
                 return file.toString();
             }
@@ -77,48 +79,6 @@ public class Monitor {
         this.keys = new HashMap<>();
 
         watch(dir, order);
-    }
-
-    private static class FileOperation {
-        double start = System.nanoTime() / 1e9;
-
-        WatchEvent<Path> delete;
-        WatchEvent<Path> create;
-        WatchEvent<Path> modify;
-
-        private FileOperation(WatchEvent<Path> delete, WatchEvent<Path> create, WatchEvent<Path> modify) {
-            this.delete = delete;
-            this.create = create;
-            this.modify = modify;
-        }
-
-        public static FileOperation delete(WatchEvent<Path> event) {
-            return new FileOperation(event, null, null);
-        }
-
-        public static FileOperation create(WatchEvent<Path> event) {
-            return new FileOperation(null, event, null);
-        }
-
-        public static FileOperation modify(WatchEvent<Path> event) {
-            return new FileOperation(null, null, event);
-        }
-
-        public boolean isRename() {
-            return delete != null && create != null;
-        }
-
-        public boolean isOldDelete() {
-            return delete != null && (System.nanoTime() / 1e9 - start) > 0.05;
-        }
-
-        public boolean isOldCreate() {
-            return create != null && (System.nanoTime() / 1e9 - start) > 0.05;
-        }
-
-        public boolean isModify() {
-            return modify != null;
-        }
     }
 
     /**
@@ -171,7 +131,7 @@ public class Monitor {
                     FileOperation op = changeMap.get(k);
                     System.out.println(op);
                     if (op != null) {
-                        op.create = ev;
+                        op.addCreate(ev);
                     } else {
                         changeBuffer.add(FileOperation.create(ev));
                     }
@@ -188,15 +148,15 @@ public class Monitor {
                 while (changeBuffer.size() > 0) {
                     FileOperation op = changeBuffer.peek();
                     if (op.isRename()) {
-                        emitRename(producer, op.delete.context(), op.create.context());
+                        emitRename(producer, op.getDeletePath(), op.getCreatePath());
                     } else if (op.isOldDelete()) {
-                        emitDelete(producer, op.delete.context());
+                        emitDelete(producer, op.getDeletePath());
                     } else if (op.isOldCreate()) {
-                        emitCreate(producer, op.create.context());
+                        emitCreate(producer, op.getCreatePath());
                     } else if (op.isModify()) {
                         // handling changes is a bit tricky because the file may have been deleted
                         // by the time we come a' knocking
-                        Path changed = op.modify.context();
+                        Path changed = op.getModifyPath();
                         FileState newState = FileState.getFileInfo(changed);
                         if (newState != null) {
                             emitModify(producer, changed, state.get(changed).changedBlockOffsets(newState));
@@ -207,8 +167,8 @@ public class Monitor {
                             state.remove(changed);
                         }
                     } else {
-                        // we can only process the leading elements of the queue
-                        // this keeps things in order
+                        // We can only process the leading elements of the queue.
+                        // This keeps things in proper order.
                         break;
                     }
                     changeBuffer.remove();
