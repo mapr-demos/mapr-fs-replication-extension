@@ -55,6 +55,7 @@ public class Monitor {
     private void watch(Path initial, OrderingRule order) throws IOException {
         this.root = initial;
         this.order = order;
+        System.out.println("Watching initiated");
         Files.walkFileTree(this.root, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -63,6 +64,7 @@ public class Monitor {
                 return FileVisitResult.CONTINUE;
             }
         });
+        System.out.println("File tree built");
     }
 
     Map<Path, FileState> state = Maps.newHashMap();
@@ -125,7 +127,9 @@ public class Monitor {
     void processEvents() throws IOException {
         Queue<FileOperation> changeBuffer = new LinkedList<>();
         Map<Object, FileOperation> changeMap = new HashMap<>();
-        KafkaProducer<String, String> producer = null;
+        KafkaProducer<String, String> producer = new KafkaProducer<>(
+                Config.getConfig().getPrefixedProps("kafka.producer.", "kafka.common.")
+        );
 
         while (true) {
             // wait for key to be signalled
@@ -155,6 +159,7 @@ public class Monitor {
                 Path name = ev.context();
                 Path child = dir.resolve(name);
 
+                System.out.println(event.kind());
                 if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
                     // buffer in case of a rename
                     FileOperation op = FileOperation.delete(ev);
@@ -164,6 +169,7 @@ public class Monitor {
                     // check buffer in case this is the second half of a rename
                     Object k = FileState.fileKey(ev.context());
                     FileOperation op = changeMap.get(k);
+                    System.out.println(op);
                     if (op != null) {
                         op.create = ev;
                     } else {
@@ -176,6 +182,7 @@ public class Monitor {
                     // emit those changes
                     changeBuffer.add(FileOperation.modify(ev));
                 }
+                System.out.println(changeBuffer.size());
 
                 // process any events that we can process
                 while (changeBuffer.size() > 0) {
@@ -239,29 +246,29 @@ public class Monitor {
     private void emitModify(KafkaProducer<String, String> producer, Path name, List<Long> fileState) {
         String key = order.messageKey(root, name);
         String msg = new Change(name, fileState).toString();
-        producer.send(new ProducerRecord<>("mapr.fs.monitor", key, msg));
+        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
     }
 
     private void emitCreate(KafkaProducer<String, String> producer, Path name) {
         String key = order.messageKey(root, name);
         String msg = new Create(name).toString();
-        producer.send(new ProducerRecord<>("mapr.fs.monitor", key, msg));
+        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
     }
 
     private void emitDelete(KafkaProducer<String, String> producer, Path name) {
         String key = order.messageKey(root, name);
         String msg = new Delete(name).toString();
-        producer.send(new ProducerRecord<>("mapr.fs.monitor", key, msg));
+        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
     }
 
     private void emitRename(KafkaProducer<String, String> producer, Path oldName, Path newName) {
         String key = order.messageKey(root, oldName);
         String msg = new RenameFrom(oldName, newName).toString();
-        producer.send(new ProducerRecord<>("mapr.fs.monitor", key, msg));
+        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
 
         key = order.messageKey(root, newName);
         msg = new RenameTo(oldName, newName).toString();
-        producer.send(new ProducerRecord<>("mapr.fs.monitor", key, msg));
+        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
     }
 
     static void usage() {
