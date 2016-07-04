@@ -21,6 +21,8 @@ public class Monitor {
     private final Map<WatchKey, Path> keys;
     private Path root;
     private OrderingRule order;
+    private Queue<FileOperation> changeBuffer;
+    private Map<Object, FileOperation> changeMap;
 
     enum OrderingRule {
         VOLUME {
@@ -73,8 +75,8 @@ public class Monitor {
      * Process all events for keys queued to the watcher
      */
     void processEvents() throws IOException {
-        Queue<FileOperation> changeBuffer = new LinkedList<>();
-        Map<Object, FileOperation> changeMap = new HashMap<>();
+        changeBuffer = new LinkedList<>();
+        changeMap = new HashMap<>();
 
         JsonProducer producer = new JsonProducer("kafka.producer.", "kafka.common.");
 
@@ -96,97 +98,116 @@ public class Monitor {
             for (WatchEvent<?> event : key.pollEvents()) {
                 WatchEvent.Kind kind = event.kind();
 
-                // TBD - provide example of how OVERFLOW event is handled
+                // ignore overflow events (I don't understand them)
                 if (kind == StandardWatchEventKinds.OVERFLOW) {
                     continue;
                 }
 
-                // Context for directory entry event is the file name of entry
-                @SuppressWarnings("unchecked") WatchEvent<Path> ev = (WatchEvent<Path>) event;
-                Path name = ev.context();
-                Path child = dir.resolve(name);
+                //noinspection unchecked
+                bufferEvent((WatchEvent<Path>) event);
+                processBufferedEvents(producer);
 
-                System.out.println(event.kind());
-                if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-                    // buffer in case of a rename
-                    FileOperation op = FileOperation.delete(ev);
-                    changeBuffer.add(op);
-                    changeMap.put(FileState.fileKey(ev.context()), op);
-                } else if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                    // check buffer in case this is the second half of a rename
-                    Object k = FileState.fileKey(ev.context());
-                    FileOperation op = changeMap.get(k);
-                    System.out.println(op);
-                    if (op != null) {
-                        op.addCreate(ev);
-                    } else {
-                        changeBuffer.add(FileOperation.create(ev));
-                    }
-                } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                    // emit any buffered changes or any deletes that are old enough from the front of the buffer
-                    // if buffered items remain, buffer this one as well
-                    // if the buffer has been emptied check to find out which blocks have changed and
-                    // emit those changes
-                    changeBuffer.add(FileOperation.modify(ev));
-                }
-                System.out.println(changeBuffer.size());
 
-                // process any events that we can process
-                while (changeBuffer.size() > 0) {
-                    FileOperation op = changeBuffer.peek();
-                    if (op.isRename()) {
-                        emitRename(producer, op.getDeletePath(), op.getCreatePath());
-                    } else if (op.isOldDelete()) {
-                        emitDelete(producer, op.getDeletePath());
-                    } else if (op.isOldCreate()) {
-                        emitCreate(producer, op.getCreatePath());
-                    } else if (op.isModify()) {
-                        // handling changes is a bit tricky because the file may have been deleted
-                        // by the time we come a' knocking
-                        Path changed = op.getModifyPath();
-                        FileState newState = FileState.getFileInfo(changed);
-                        if (newState != null) {
-                            emitModify(producer, changed, state.get(changed).changedBlockOffsets(newState));
-                            state.put(changed, newState);
-                        } else {
-                            // if file deleted, we just forget about it and any changes that might have happened
-                            // just before it disappeared
-                            state.remove(changed);
-                        }
-                    } else {
-                        // We can only process the leading elements of the queue.
-                        // This keeps things in proper order.
-                        break;
-                    }
-                    changeBuffer.remove();
-                }
-
-                // print out event
-                System.out.format("%s: %s\n", event.kind().name(), child);
-
-                // if directory is created, and watching recursively, then
-                // registerDirectory it and its sub-directories
+                // if directory is created, watch it, too
                 if ((kind == ENTRY_CREATE)) {
                     try {
+                        //noinspection unchecked
+                        Path child = dir.resolve(((WatchEvent<Path>) event).context());
                         if (Files.isDirectory(child, LinkOption.NOFOLLOW_LINKS)) {
                             watch(child, order);
                         }
                     } catch (IOException x) {
-                        // ignore to keep sample readbale
+                        // ignored
                     }
                 }
             }
 
-            // reset key and remove from set if directory no longer accessible
-            boolean valid = key.reset();
-            if (!valid) {
+            if (!key.reset()) {
                 keys.remove(key);
 
-                // all directories are inaccessible
+                // nothing left to watch!
                 if (keys.isEmpty()) {
                     break;
                 }
             }
+        }
+    }
+
+    /**
+     * Adds a single event to the correct queues, merging to an existing event if appropriate.
+     *
+     * Exposed for testing only.
+     *
+     * @param ev The event to merge
+     * @throws IOException If we can't stat the file to get a unique key
+     */
+    void bufferEvent(WatchEvent<Path> ev) throws IOException {
+        if (ev.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
+            // buffer in case of a rename
+            FileOperation op = FileOperation.delete(ev);
+            changeBuffer.add(op);
+            changeMap.put(FileState.fileKey(ev.context()), op);
+        } else if (ev.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+            // check buffer in case this is the second half of a rename
+            Object k = FileState.fileKey(ev.context());
+            FileOperation op = changeMap.get(k);
+            if (op != null) {
+                op.addCreate(ev);
+            } else {
+                changeBuffer.add(FileOperation.create(ev));
+            }
+        } else if (ev.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
+            // emit any buffered changes or any deletes that are old enough from the front of the buffer
+            changeBuffer.add(FileOperation.modify(ev));
+        }
+    }
+
+    /**
+     * Processes events in the order they were buffered, but only if they are ready.
+     * The only things that can be not ready are deletes or creates that are waiting
+     * to be promoted into rename events.
+     *
+     * Exposed for testing only.
+     *
+     * @param producer     Where to send the events
+     * @throws IOException If we can't read the file contents to find changes or we can't
+     *                     send the message.
+     */
+    void processBufferedEvents(JsonProducer producer) throws IOException {
+        // process any events that we can process
+        while (changeBuffer.size() > 0) {
+            FileOperation op = changeBuffer.peek();
+            if (op.isRename()) {
+                emitRename(producer, op.getDeletePath(), op.getCreatePath());
+            } else if (op.isOldDelete()) {
+                emitDelete(producer, op.getDeletePath());
+            } else if (op.isOldCreate()) {
+                emitCreate(producer, op.getCreatePath());
+            } else if (op.isModify()) {
+                // handling changes is a bit tricky because the file may have been deleted
+                // by the time we come a' knocking
+                Path changed = op.getModifyPath();
+                FileState newState = FileState.getFileInfo(changed);
+                if (newState != null) {
+                    emitModify(producer, changed, state.get(changed).changedBlockOffsets(newState));
+                    state.put(changed, newState);
+                } else {
+                    // if file was deleted before we saw the change,
+                    // we just forget about it and any changes that might have happened
+                    // just before it disappeared. We shouldn't emit the delete event here
+                    // since it will be coming shortly
+                    state.remove(changed);
+                }
+            } else {
+                // We can only process the leading elements of the queue.
+                // This keeps things in proper order. The head of the queue
+                // might be a young delete or create waiting for a promotion
+                // to be a rename. We should not deal with those right now.
+                // Either that promotion will happen, or the event will age
+                // very quickly. In either case, the blockage won't last long.
+                break;
+            }
+            changeBuffer.remove();
         }
     }
 
