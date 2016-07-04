@@ -18,6 +18,16 @@ public class Config {
         }
     }
 
+    public Config(String... prefixes) {
+        for (String prefix : prefixes) {
+            for (final String name : properties.stringPropertyNames()) {
+                if (name.startsWith(prefix)) {
+                    properties.put(name.substring(prefix.length()), properties.getProperty(name));
+                }
+            }
+        }
+    }
+
     private boolean loadConfig() {
         for (String path : CONFIG_PATHS) {
             try (InputStream props = new FileInputStream(path)) {
@@ -38,19 +48,11 @@ public class Config {
         return instance;
     }
 
-    public Properties getPrefixedProps(String... prefixes) {
-        Properties props = new Properties();
-        for (String prefix : prefixes) {
-            for (final String name : properties.stringPropertyNames()) {
-                if (name.startsWith(prefix)) {
-                    props.put(name.substring(prefix.length()), properties.getProperty(name));
-                }
-            }
-        }
-        return props;
-    }
-
     public String getProducerTopicName(String topic) {
         return properties.get(KAFKA_PRODUCER_STREAM) + ":" + topic;
+    }
+
+    public Properties getProperties() {
+        return properties;
     }
 }

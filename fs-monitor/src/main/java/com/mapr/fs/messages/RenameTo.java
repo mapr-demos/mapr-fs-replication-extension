@@ -1,12 +1,16 @@
 package com.mapr.fs.messages;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.nio.file.Path;
 
 /**
- * Created by tdunning on 7/3/16.
+ * One of a pair of events that describes a renaming
  */
 public class RenameTo {
+    @JsonProperty("oldName")
     public Path oldName;
+    @JsonProperty("newName")
     public Path newName;
 
     public RenameTo(Path oldName, Path newName) {

@@ -1,34 +1,22 @@
 package com.mapr.fs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Maps;
 import com.mapr.fs.messages.*;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.*;
 
 /**
  * Watches a directory for changes and writes those changes as appropriate
  * to a MapR stream.
  */
 public class Monitor {
+    public static final String MONITOR_TOPIC = "mapr.fs.monitor";
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
     private Path root;
@@ -87,9 +75,8 @@ public class Monitor {
     void processEvents() throws IOException {
         Queue<FileOperation> changeBuffer = new LinkedList<>();
         Map<Object, FileOperation> changeMap = new HashMap<>();
-        KafkaProducer<String, String> producer = new KafkaProducer<>(
-                Config.getConfig().getPrefixedProps("kafka.producer.", "kafka.common.")
-        );
+
+        JsonProducer producer = new JsonProducer("kafka.producer.", "kafka.common.");
 
         while (true) {
             // wait for key to be signalled
@@ -203,32 +190,21 @@ public class Monitor {
         }
     }
 
-    private void emitModify(KafkaProducer<String, String> producer, Path name, List<Long> fileState) {
-        String key = order.messageKey(root, name);
-        String msg = new Change(name, fileState).toString();
-        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
+    private void emitModify(JsonProducer producer, Path name, List<Long> fileState) throws JsonProcessingException {
+        producer.send(MONITOR_TOPIC, order.messageKey(root, name), new Change(name, fileState));
     }
 
-    private void emitCreate(KafkaProducer<String, String> producer, Path name) {
-        String key = order.messageKey(root, name);
-        String msg = new Create(name).toString();
-        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
+    private void emitCreate(JsonProducer producer, Path name) throws JsonProcessingException {
+        producer.send(MONITOR_TOPIC, order.messageKey(root, name), new Create(name));
     }
 
-    private void emitDelete(KafkaProducer<String, String> producer, Path name) {
-        String key = order.messageKey(root, name);
-        String msg = new Delete(name).toString();
-        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
+    private void emitDelete(JsonProducer producer, Path name) throws JsonProcessingException {
+        producer.send(MONITOR_TOPIC, order.messageKey(root, name), new Delete(name));
     }
 
-    private void emitRename(KafkaProducer<String, String> producer, Path oldName, Path newName) {
-        String key = order.messageKey(root, oldName);
-        String msg = new RenameFrom(oldName, newName).toString();
-        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
-
-        key = order.messageKey(root, newName);
-        msg = new RenameTo(oldName, newName).toString();
-        producer.send(new ProducerRecord<>(Config.getConfig().getProducerTopicName("mapr.fs.monitor"), key, msg));
+    private void emitRename(JsonProducer producer, Path oldName, Path newName) throws JsonProcessingException {
+        producer.send(MONITOR_TOPIC, order.messageKey(root, oldName), new RenameFrom(oldName, newName));
+        producer.send(MONITOR_TOPIC, order.messageKey(root, newName), new RenameTo(oldName, newName));
     }
 
     static void usage() {
