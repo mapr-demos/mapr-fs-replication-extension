@@ -167,7 +167,9 @@ public class MonitorTest extends TestCase {
     }
 
     public JsonProducer getMockProducer() {
-        return new JsonProducer(new MockProducer<>(true, new StringSerializer(), new StringSerializer()));
+        String confPath = Thread.currentThread().getContextClassLoader().getResource("test_config.conf").getPath();
+        Config config = new Config(confPath, new String[]{"kafka.producer.", "kafka.common."});
+        return new JsonProducer(new MockProducer<>(true, new StringSerializer(), new StringSerializer()), config);
     }
 
     private static class Event<T> implements WatchEvent<T> {
