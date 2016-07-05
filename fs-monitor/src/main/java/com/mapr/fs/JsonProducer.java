@@ -28,8 +28,9 @@ public class JsonProducer {
     }
 
 
-    public JsonProducer(Producer<String, String> delegate) {
+    public JsonProducer(Producer<String, String> delegate, Config config) {
         this.delegate = delegate;
+        this.config = config;
     }
 
     public JsonProducer(String ... configPrefixes) {
@@ -38,11 +39,11 @@ public class JsonProducer {
     }
 
     public void send(String topic, Object x) throws JsonProcessingException {
-        delegate.send(new ProducerRecord<>(topic, mapper.writeValueAsString(x)));
+        delegate.send(new ProducerRecord<>(config.getTopicName(topic), mapper.writeValueAsString(x)));
     }
 
     public void send(String topic, String key, Object x) throws JsonProcessingException {
-        delegate.send(new ProducerRecord<>(topic, key, mapper.writeValueAsString(x)));
+        delegate.send(new ProducerRecord<>(config.getTopicName(topic), key, mapper.writeValueAsString(x)));
     }
 
     public void close() {
