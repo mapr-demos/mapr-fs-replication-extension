@@ -13,32 +13,36 @@ public class Config {
     private static Config instance;
 
     private Config() {
-        if (!loadConfig()) {
+        properties = loadConfig();
+        if (properties == null) {
             throw new RuntimeException("Config file not found");
         }
     }
 
     public Config(String... prefixes) {
+        Properties configProps = loadConfig();
         for (String prefix : prefixes) {
-            for (final String name : properties.stringPropertyNames()) {
+            for (final String name : configProps.stringPropertyNames()) {
                 if (name.startsWith(prefix)) {
-                    properties.put(name.substring(prefix.length()), properties.getProperty(name));
+                    properties.put(name.substring(prefix.length()), configProps.getProperty(name));
                 }
             }
         }
     }
 
-    private boolean loadConfig() {
+    private Properties loadConfig() {
+        Properties properties = null;
         for (String path : CONFIG_PATHS) {
             try (InputStream props = new FileInputStream(path)) {
+                properties = new Properties();
                 properties.load(props);
                 System.err.println("Config found at path " + path);
-                return true;
+                break;
             } catch (IOException e) {
                 System.err.println("Config not found at path " + path);
             }
         }
-        return false;
+        return properties;
     }
 
     public static synchronized Config getConfig() {
