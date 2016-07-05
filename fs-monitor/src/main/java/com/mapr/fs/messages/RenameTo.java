@@ -8,13 +8,16 @@ import java.nio.file.Path;
  * One of a pair of events that describes a renaming
  */
 public class RenameTo {
+    @JsonProperty("type")
+    public final String type = "rename_to";
+
     @JsonProperty("oldName")
-    public Path oldName;
+    public String oldName;
     @JsonProperty("newName")
-    public Path newName;
+    public String newName;
 
     public RenameTo(Path oldName, Path newName) {
-        this.oldName = oldName;
-        this.newName = newName;
+        this.oldName = oldName.toString();
+        this.newName = newName.toString();
     }
 }

@@ -2,6 +2,7 @@ package com.mapr.fs;
 
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
+import java.util.List;
 
 /**
  * Represents a single file system operation. This can be a creation, deletion, modification or rename.
@@ -11,7 +12,7 @@ import java.nio.file.WatchEvent;
  */
 class FileOperation {
     // how long should we wait for the second half of a rename?
-    public static final double MAX_TIME_FOR_RENAME = 0.05;
+    public static double maxTimeForRename = 0.1;
 
     // when was this even first seen? Used to decide when a delete is really just a delete rather than
     // the beginning of a rename
@@ -22,8 +23,9 @@ class FileOperation {
     private WatchEvent<Path> delete;
     private WatchEvent<Path> create;
     private final WatchEvent<Path> modify;
+    private final List<Long> changes;
 
-    private FileOperation(WatchEvent<Path> delete, WatchEvent<Path> create, WatchEvent<Path> modify) {
+    private FileOperation(WatchEvent<Path> delete, WatchEvent<Path> create, WatchEvent<Path> modify, List<Long> changes) {
         int activeCount = 0;
         activeCount += delete != null ? 1 : 0;
         activeCount += create != null ? 1 : 0;
@@ -32,21 +34,30 @@ class FileOperation {
             this.delete = delete;
             this.create = create;
             this.modify = modify;
+            if (modify != null) {
+                if (changes != null) {
+                    this.changes = changes;
+                } else {
+                    throw new IllegalArgumentException("Modify events must have associated changes");
+                }
+            } else {
+                this.changes = null;
+            }
         } else {
             throw new IllegalArgumentException("Can only be delete, create or modify at construction time");
         }
     }
 
     public static FileOperation delete(WatchEvent<Path> event) {
-        return new FileOperation(event, null, null);
+        return new FileOperation(event, null, null, null);
     }
 
     public static FileOperation create(WatchEvent<Path> event) {
-        return new FileOperation(null, event, null);
+        return new FileOperation(null, event, null, null);
     }
 
-    public static FileOperation modify(WatchEvent<Path> event) {
-        return new FileOperation(null, null, event);
+    public static FileOperation modify(WatchEvent<Path> event, List<Long> longs) {
+        return new FileOperation(null, null, event, longs);
     }
 
     public void addCreate(WatchEvent<Path> event) {
@@ -75,19 +86,28 @@ class FileOperation {
         return modify.context();
     }
 
+    // for testing
+    public static void setMaxTimeForRename(double maxTimeForRename) {
+        FileOperation.maxTimeForRename = maxTimeForRename;
+    }
+
     public boolean isRename() {
         return delete != null && create != null;
     }
 
     public boolean isOldDelete() {
-        return delete != null && (System.nanoTime() / 1e9 - start) > MAX_TIME_FOR_RENAME;
+        return delete != null && (System.nanoTime() / 1e9 - start) > maxTimeForRename;
     }
 
     public boolean isOldCreate() {
-        return create != null && (System.nanoTime() / 1e9 - start) > 0.05;
+        return create != null && (System.nanoTime() / 1e9 - start) > maxTimeForRename;
     }
 
     public boolean isModify() {
         return modify != null;
+    }
+
+    public List<Long> getModifiedOffsets() {
+        return changes;
     }
 }

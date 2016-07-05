@@ -33,8 +33,9 @@ public class FileState {
                 int n = input.read(buffer);
                 while (n > 0) {
                     r.hashes.add(hf.newHasher()
-                            .putBytes(buffer)
+                            .putBytes(buffer, 0, n)
                             .hash().asLong());
+                    n = input.read(buffer);
                 }
                 return r;
             } catch (NoSuchFileException e) {
@@ -76,6 +77,7 @@ public class FileState {
         while (i.hasNext()) {
             r.add(offset);
             offset += 8192;
+            i.next();
         }
         return r;
     }

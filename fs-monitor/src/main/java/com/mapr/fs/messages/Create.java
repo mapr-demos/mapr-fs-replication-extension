@@ -8,10 +8,13 @@ import java.nio.file.Path;
  * Indicates a file has been created.
  */
 public class Create {
+    @JsonProperty("type")
+    public final String type = "create";
+
     @JsonProperty("name")
-    public Path name;
+    public String name;
 
     public Create(Path name) {
-        this.name = name;
+        this.name = name.toString();
     }
 }

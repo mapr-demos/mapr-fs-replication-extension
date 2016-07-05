@@ -8,10 +8,13 @@ import java.nio.file.Path;
  * Indicates a file has been deleted.
  */
 public class Delete {
+    @JsonProperty("type")
+    public final String type = "delete";
+
     @JsonProperty("name")
-    public Path name;
+    public String name;
 
     public Delete(Path name) {
-        this.name = name;
+        this.name = name.toString();
     }
 }

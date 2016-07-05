@@ -24,7 +24,7 @@ public class Monitor {
     private Queue<FileOperation> changeBuffer;
     private Map<Object, FileOperation> changeMap;
 
-    enum OrderingRule {
+    public enum OrderingRule {
         VOLUME {
             public String messageKey(Path root, Path file) {
                 return root.toString();
@@ -60,6 +60,7 @@ public class Monitor {
     }
 
     Map<Path, FileState> state = Maps.newHashMap();
+    Map<Path, Object> inodes = Maps.newHashMap();
 
     /**
      * Creates a WatchService and registers the given directory
@@ -67,6 +68,8 @@ public class Monitor {
     Monitor(Path dir, OrderingRule order) throws IOException {
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
+        changeBuffer = new LinkedList<>();
+        changeMap = new HashMap<>();
 
         watch(dir, order);
     }
@@ -138,27 +141,46 @@ public class Monitor {
      *
      * Exposed for testing only.
      *
-     * @param ev The event to merge
+     * @param event The event to merge
      * @throws IOException If we can't stat the file to get a unique key
      */
-    void bufferEvent(WatchEvent<Path> ev) throws IOException {
-        if (ev.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
+    void bufferEvent(WatchEvent<Path> event) throws IOException {
+        if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
             // buffer in case of a rename
-            FileOperation op = FileOperation.delete(ev);
+            FileOperation op = FileOperation.delete(event);
             changeBuffer.add(op);
-            changeMap.put(FileState.fileKey(ev.context()), op);
-        } else if (ev.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-            // check buffer in case this is the second half of a rename
-            Object k = FileState.fileKey(ev.context());
-            FileOperation op = changeMap.get(k);
-            if (op != null) {
-                op.addCreate(ev);
-            } else {
-                changeBuffer.add(FileOperation.create(ev));
+
+            // also record pointer back to this op so that a later create can be added
+            Object key = inodes.get(event.context());
+            if (key != null) {
+                changeMap.put(key, op);
             }
-        } else if (ev.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-            // emit any buffered changes or any deletes that are old enough from the front of the buffer
-            changeBuffer.add(FileOperation.modify(ev));
+        } else if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+            // check buffer in case this is the second half of a rename
+            Object k = FileState.fileKey(event.context());
+            inodes.put(event.context(), k);
+
+            FileOperation op = changeMap.get(k);
+            FileState fs;
+            if (op != null) {
+                // this is the second part of the rename
+                op.addCreate(event);
+                inodes.remove(op.getDeletePath());
+                fs = state.remove(op.getDeletePath());
+                changeMap.remove(k);
+            } else {
+                // this is a stand-alone creation
+                changeBuffer.add(FileOperation.create(event));
+                fs = FileState.getFileInfo(event.context());
+            }
+            state.put(event.context(), fs);
+        } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
+            // emit any buffered changes
+            FileState oldState = state.get(event.context());
+            FileState newState = FileState.getFileInfo(event.context());
+            changeBuffer.add(FileOperation.modify(event, newState.changedBlockOffsets(oldState)));
+            state.put(event.context(), newState);
+
         }
     }
 
@@ -179,7 +201,10 @@ public class Monitor {
             FileOperation op = changeBuffer.peek();
             if (op.isRename()) {
                 emitRename(producer, op.getDeletePath(), op.getCreatePath());
+                // TODO need to check here for changes just before the rename that might have been missed
             } else if (op.isOldDelete()) {
+                System.out.printf("%.3f s old\n", System.nanoTime() / 1e9 - op.start);
+
                 emitDelete(producer, op.getDeletePath());
             } else if (op.isOldCreate()) {
                 emitCreate(producer, op.getCreatePath());
@@ -189,7 +214,7 @@ public class Monitor {
                 Path changed = op.getModifyPath();
                 FileState newState = FileState.getFileInfo(changed);
                 if (newState != null) {
-                    emitModify(producer, changed, state.get(changed).changedBlockOffsets(newState));
+                    emitModify(producer, changed, op.getModifiedOffsets());
                     state.put(changed, newState);
                 } else {
                     // if file was deleted before we saw the change,
@@ -226,6 +251,18 @@ public class Monitor {
     private void emitRename(JsonProducer producer, Path oldName, Path newName) throws JsonProcessingException {
         producer.send(MONITOR_TOPIC, order.messageKey(root, oldName), new RenameFrom(oldName, newName));
         producer.send(MONITOR_TOPIC, order.messageKey(root, newName), new RenameTo(oldName, newName));
+    }
+
+    /**
+     * Exposed for testing purposes.
+     * @return A reference to the internal change buffer.
+     */
+    Queue<FileOperation> getChangeBuffer() {
+        return changeBuffer;
+    }
+
+    public void recordFileState(Path f) throws IOException {
+        state.put(f, FileState.getFileInfo(f));
     }
 
     static void usage() {
