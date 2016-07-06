@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Maps;
 import com.mapr.fs.messages.*;
 
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -107,7 +108,7 @@ public class Monitor {
                 }
 
                 //noinspection unchecked
-                bufferEvent((WatchEvent<Path>) event);
+                bufferEvent(dir, (WatchEvent<Path>) event);
                 processBufferedEvents(producer);
 
 
@@ -141,46 +142,69 @@ public class Monitor {
      *
      * Exposed for testing only.
      *
+     *
+     * @param watchDir
      * @param event The event to merge
      * @throws IOException If we can't stat the file to get a unique key
      */
-    void bufferEvent(WatchEvent<Path> event) throws IOException {
+    void bufferEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
         if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-            // buffer in case of a rename
-            FileOperation op = FileOperation.delete(event);
-            changeBuffer.add(op);
-
-            // also record pointer back to this op so that a later create can be added
-            Object key = inodes.get(event.context());
-            if (key != null) {
-                changeMap.put(key, op);
-            }
+            processDeleteEvent(watchDir, event);
         } else if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-            // check buffer in case this is the second half of a rename
-            Object k = FileState.fileKey(event.context());
-            inodes.put(event.context(), k);
-
-            FileOperation op = changeMap.get(k);
-            FileState fs;
-            if (op != null) {
-                // this is the second part of the rename
-                op.addCreate(event);
-                inodes.remove(op.getDeletePath());
-                fs = state.remove(op.getDeletePath());
-                changeMap.remove(k);
-            } else {
-                // this is a stand-alone creation
-                changeBuffer.add(FileOperation.create(event));
-                fs = FileState.getFileInfo(event.context());
-            }
-            state.put(event.context(), fs);
+            processCreateEvent(watchDir, event);
         } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-            // emit any buffered changes
-            FileState oldState = state.get(event.context());
-            FileState newState = FileState.getFileInfo(event.context());
-            changeBuffer.add(FileOperation.modify(event, newState.changedBlockOffsets(oldState)));
-            state.put(event.context(), newState);
+            processModifyEvent(watchDir, event);
+        }
+    }
 
+    private void processModifyEvent(Path watchDir, WatchEvent<Path> event) {
+        Path filePath = watchDir.resolve(event.context());
+        System.out.println(ENTRY_MODIFY);
+        System.out.println(filePath);
+
+        // emit any buffered changes
+        try {
+            FileState oldState = state.get(filePath);
+            FileState newState = FileState.getFileInfo(filePath);
+            changeBuffer.add(FileOperation.modify(watchDir, event, newState.changedBlockOffsets(oldState)));
+            state.put(filePath, newState);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void processCreateEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
+        System.out.println(ENTRY_CREATE);
+        // check buffer in case this is the second half of a rename
+        Path filePath = watchDir.resolve(event.context());
+        Object k = FileState.fileKey(filePath);
+        inodes.put(filePath, k);
+
+        FileOperation op = changeMap.get(k);
+        if (op != null) {
+            // this is the second part of the rename
+            op.addCreate(event);
+            inodes.remove(op.getDeletePath());
+            FileState fs = state.remove(op.getDeletePath());
+            changeMap.remove(k);
+            state.put(filePath, fs);
+        } else {
+            // this is a stand-alone creation
+            changeBuffer.add(FileOperation.create(watchDir, event));
+        }
+    }
+
+    private void processDeleteEvent(Path watchDir, WatchEvent<Path> event) {
+        Path filePath = watchDir.resolve(event.context());
+        System.out.println(ENTRY_DELETE);
+        // buffer in case of a rename
+        FileOperation op = FileOperation.delete(watchDir, event);
+        changeBuffer.add(op);
+
+        // also record pointer back to this op so that a later create can be added
+        Object key = inodes.get(filePath);
+        if (key != null) {
+            changeMap.put(key, op);
         }
     }
 
@@ -214,7 +238,8 @@ public class Monitor {
                 Path changed = op.getModifyPath();
                 FileState newState = FileState.getFileInfo(changed);
                 if (newState != null) {
-                    emitModify(producer, changed, op.getModifiedOffsets());
+                    emitModify(producer, changed, newState.getFileSize(), op.getModifiedOffsets(),
+                            newState.changedBlockContentEncoded(op.getModifiedOffsets()));
                     state.put(changed, newState);
                 } else {
                     // if file was deleted before we saw the change,
@@ -236,21 +261,31 @@ public class Monitor {
         }
     }
 
-    private void emitModify(JsonProducer producer, Path name, List<Long> fileState) throws JsonProcessingException {
-        producer.send(MONITOR_TOPIC, order.messageKey(root, name), new Change(name, fileState));
+    private void emitModify(JsonProducer producer, Path name, Long size, List<Long> fileState, List<String> changes) throws JsonProcessingException {
+        producer.send(MONITOR_TOPIC, order.messageKey(root, name),
+                new Change(root.relativize(name), size,
+                        fileState, changes));
+        System.out.println("send to stream -> MODIFY");
     }
 
     private void emitCreate(JsonProducer producer, Path name) throws JsonProcessingException {
-        producer.send(MONITOR_TOPIC, order.messageKey(root, name), new Create(name));
+        producer.send(MONITOR_TOPIC, order.messageKey(root, name),
+                new Create(root.relativize(name)));
+        System.out.println("send to stream -> CREATE");
     }
 
     private void emitDelete(JsonProducer producer, Path name) throws JsonProcessingException {
-        producer.send(MONITOR_TOPIC, order.messageKey(root, name), new Delete(name));
+        producer.send(MONITOR_TOPIC, order.messageKey(root, name),
+                new Delete(root.relativize(name)));
+        System.out.println("send to stream -> DELETE");
     }
 
     private void emitRename(JsonProducer producer, Path oldName, Path newName) throws JsonProcessingException {
-        producer.send(MONITOR_TOPIC, order.messageKey(root, oldName), new RenameFrom(oldName, newName));
-        producer.send(MONITOR_TOPIC, order.messageKey(root, newName), new RenameTo(oldName, newName));
+        producer.send(MONITOR_TOPIC, order.messageKey(root, oldName),
+                new RenameFrom(root.relativize(oldName), root.relativize(newName)));
+        producer.send(MONITOR_TOPIC, order.messageKey(root, newName),
+                new RenameTo(root.relativize(oldName), root.relativize(newName)));
+        System.out.println("send to stream -> RENAME");
     }
 
     /**

@@ -1,9 +1,8 @@
 package com.mapr.fs;
 
-import com.google.common.base.Charsets;
-import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import org.apache.commons.codec.binary.Base64;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -11,6 +10,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,18 +18,26 @@ import java.util.List;
  * Records the state of a file, including name, FID, permissions and content.
  */
 public class FileState {
+    public static final int BLOCK_SIZE = 8192;
+    private long size;
     private List<Long> hashes = new ArrayList<>();
     private Object inode;
+    private Path path;
+
+    public FileState(Path path) {
+        this.path = path;
+    }
 
     public static FileState getFileInfo(Path path) throws IOException {
         if (path.toFile().exists()) {
             try {
-                FileState r = new FileState();
+                FileState r = new FileState(path);
                 r.inode = fileKey(path);
 
                 HashFunction hf = Hashing.murmur3_128();
-                byte[] buffer = new byte[8192];
+                byte[] buffer = new byte[BLOCK_SIZE];
                 InputStream input = new BufferedInputStream(new FileInputStream(path.toFile()), 1024 * 1024);
+                r.size = path.toFile().length();
                 int n = input.read(buffer);
                 while (n > 0) {
                     r.hashes.add(hf.newHasher()
@@ -66,18 +74,38 @@ public class FileState {
         long offset = 0;
         List<Long> r = new ArrayList<>();
         Iterator<Long> i = this.hashes.iterator();
-        Iterator<Long> j = other.hashes.iterator();
-        while (i.hasNext() && j.hasNext()) {
-            if (!i.next().equals(j.next())) {
-                r.add(offset);
+
+        if (other != null) {
+            Iterator<Long> j = other.hashes.iterator();
+            while (i.hasNext() && j.hasNext()) {
+                if (!i.next().equals(j.next())) {
+                    r.add(offset);
+                }
+                offset += BLOCK_SIZE;
             }
-            offset += 8192;
         }
 
         while (i.hasNext()) {
             r.add(offset);
-            offset += 8192;
+            offset += BLOCK_SIZE;
             i.next();
+        }
+        return r;
+    }
+
+    public List<String> changedBlockContentEncoded(List<Long> offsets) throws IOException {
+        List<String> r = new ArrayList<>();
+        RandomAccessFile input = new RandomAccessFile(this.path.toFile(), "r");
+        for(long offset : offsets) {
+            byte[] buffer = new byte[BLOCK_SIZE];
+            input.seek(offset);
+            int size = input.read(buffer);
+            if (size < buffer.length) {
+                buffer = Arrays.copyOf(buffer, size);
+            }
+            String encodedBlock = new String(Base64.encodeBase64(buffer));
+            System.out.println(encodedBlock);
+            r.add(encodedBlock);
         }
         return r;
     }
@@ -94,5 +122,9 @@ public class FileState {
 
     public Object getInode() {
         return inode;
+    }
+
+    public Long getFileSize() {
+        return size;
     }
 }

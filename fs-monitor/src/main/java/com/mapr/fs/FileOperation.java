@@ -24,8 +24,10 @@ class FileOperation {
     private WatchEvent<Path> create;
     private final WatchEvent<Path> modify;
     private final List<Long> changes;
+    private Path watchDir;
 
-    private FileOperation(WatchEvent<Path> delete, WatchEvent<Path> create, WatchEvent<Path> modify, List<Long> changes) {
+    private FileOperation(Path watchDir, WatchEvent<Path> delete, WatchEvent<Path> create, WatchEvent<Path> modify, List<Long> changes) {
+        this.watchDir = watchDir;
         int activeCount = 0;
         activeCount += delete != null ? 1 : 0;
         activeCount += create != null ? 1 : 0;
@@ -48,16 +50,16 @@ class FileOperation {
         }
     }
 
-    public static FileOperation delete(WatchEvent<Path> event) {
-        return new FileOperation(event, null, null, null);
+    public static FileOperation delete(Path watchDir, WatchEvent<Path> event) {
+        return new FileOperation(watchDir, event, null, null, null);
     }
 
-    public static FileOperation create(WatchEvent<Path> event) {
-        return new FileOperation(null, event, null, null);
+    public static FileOperation create(Path watchDir, WatchEvent<Path> event) {
+        return new FileOperation(watchDir, null, event, null, null);
     }
 
-    public static FileOperation modify(WatchEvent<Path> event, List<Long> longs) {
-        return new FileOperation(null, null, event, longs);
+    public static FileOperation modify(Path watchDir, WatchEvent<Path> event, List<Long> longs) {
+        return new FileOperation(watchDir, null, null, event, longs);
     }
 
     public void addCreate(WatchEvent<Path> event) {
@@ -75,15 +77,15 @@ class FileOperation {
     }
 
     public Path getCreatePath() {
-        return create.context();
+        return watchDir.resolve(create.context());
     }
 
     public Path getDeletePath() {
-        return delete.context();
+        return watchDir.resolve(delete.context());
     }
 
     public Path getModifyPath() {
-        return modify.context();
+        return watchDir.resolve(modify.context());
     }
 
     // for testing

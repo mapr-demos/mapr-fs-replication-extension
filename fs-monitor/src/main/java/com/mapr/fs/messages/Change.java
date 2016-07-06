@@ -14,11 +14,17 @@ public class Change {
 
     @JsonProperty("name")
     public String name;
+    @JsonProperty("size")
+    public Long fileSize;
     @JsonProperty("changes")
     public List<Long> changedBlocks;
+    @JsonProperty("changesContent")
+    public List<String> changedBlocksContent;
 
-    public Change(Path name, List<Long> changedBlocks) {
+    public Change(Path name, Long fileSize, List<Long> changedBlocks, List<String> changedBlocksContent) {
         this.name = name.toString();
+        this.fileSize = fileSize;
         this.changedBlocks = changedBlocks;
+        this.changedBlocksContent = changedBlocksContent;
     }
 }
