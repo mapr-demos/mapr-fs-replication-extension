@@ -14,7 +14,11 @@ public class Create {
     @JsonProperty("name")
     public String name;
 
-    public Create(Path name) {
+    @JsonProperty("directory")
+    public boolean directory;
+
+    public Create(Path name, boolean directory) {
         this.name = name.toString();
+        this.directory = directory;
     }
 }

@@ -26,7 +26,7 @@ public class MonitorTest extends TestCase {
     public void testNoEventsTooEarly() throws Exception {
         File dir = Files.createTempDir();
         try {
-            Monitor mon = new Monitor(dir.toPath(), Monitor.OrderingRule.VOLUME);
+            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME);
             // make timeout really long to make debugging safer
             FileOperation.setMaxTimeForRename(60);
 
@@ -57,7 +57,7 @@ public class MonitorTest extends TestCase {
     public void testDelayAllowsEvents() throws Exception {
         File dir = Files.createTempDir();
         try {
-            Monitor mon = new Monitor(dir.toPath(), Monitor.OrderingRule.VOLUME);
+            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME);
             FileOperation.setMaxTimeForRename(2);
 
             Path f = new File(dir, "f1").toPath();
@@ -103,7 +103,7 @@ public class MonitorTest extends TestCase {
             ObjectMapper mapper = Util.getObjectMapper();
             String[] types = {"create", "change", "change"};
             for (int i = 0; i < 3; i++) {
-                assertEquals(Monitor.MONITOR_TOPIC, history.get(i).topic());
+                assertEquals(Config.MONITOR_TOPIC, history.get(i).topic());
                 assertEquals(dir.getAbsolutePath(), history.get(i).key());
                 JsonNode c = mapper.readTree(history.get(i).value());
                 assertEquals(f.toString(), c.get("name").asText());
@@ -117,7 +117,7 @@ public class MonitorTest extends TestCase {
     public void testRename() throws Exception {
         File dir = Files.createTempDir();
         try {
-            Monitor mon = new Monitor(dir.toPath(), Monitor.OrderingRule.FILE);
+            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.FILE);
             FileOperation.setMaxTimeForRename(2000);
 
             Path f1 = new File(dir, "f1").toPath();
@@ -155,7 +155,7 @@ public class MonitorTest extends TestCase {
             String[] types = {"create", "change", "rename_from", "rename_to"};
             String[] keys = {f1.toString(), f1.toString(), f1.toString(), f2.toString()};
             for (int i = 0; i < 3; i++) {
-                assertEquals(Monitor.MONITOR_TOPIC, history.get(i).topic());
+                assertEquals(Config.MONITOR_TOPIC, history.get(i).topic());
                 assertEquals(keys[i], history.get(i).key());
                 JsonNode c = mapper.readTree(history.get(i).value());
                 assertEquals(f1.toString(), c.get("name").asText());

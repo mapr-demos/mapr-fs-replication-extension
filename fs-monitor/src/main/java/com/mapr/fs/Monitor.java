@@ -17,13 +17,13 @@ import static java.nio.file.StandardWatchEventKinds.*;
  * to a MapR stream.
  */
 public class Monitor {
-    public static final String MONITOR_TOPIC = "mapr.fs.monitor";
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
     private Path root;
     private OrderingRule order;
     private Queue<FileOperation> changeBuffer;
     private Map<Object, FileOperation> changeMap;
+    private final String volumeName;
 
     public enum OrderingRule {
         VOLUME {
@@ -45,11 +45,9 @@ public class Monitor {
         public abstract String messageKey(Path root, Path file);
     }
 
-    private void watch(Path initial, OrderingRule order) throws IOException {
-        this.root = initial;
-        this.order = order;
+    private void watch(Path dir) throws IOException {
         System.out.println("Watching initiated");
-        Files.walkFileTree(this.root, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                 WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
@@ -66,13 +64,17 @@ public class Monitor {
     /**
      * Creates a WatchService and registers the given directory
      */
-    Monitor(Path dir, OrderingRule order) throws IOException {
+    Monitor(String volumeName, Path dir, OrderingRule order) throws IOException {
+        this.volumeName = volumeName;
+        System.out.println(volumeName);
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
         changeBuffer = new LinkedList<>();
         changeMap = new HashMap<>();
 
-        watch(dir, order);
+        this.root = dir;
+        this.order = order;
+        watch(this.root);
     }
 
     /**
@@ -118,7 +120,7 @@ public class Monitor {
                         //noinspection unchecked
                         Path child = dir.resolve(((WatchEvent<Path>) event).context());
                         if (Files.isDirectory(child, LinkOption.NOFOLLOW_LINKS)) {
-                            watch(child, order);
+                            watch(child);
                         }
                     } catch (IOException x) {
                         // ignored
@@ -262,28 +264,28 @@ public class Monitor {
     }
 
     private void emitModify(JsonProducer producer, Path name, Long size, List<Long> fileState, List<String> changes) throws JsonProcessingException {
-        producer.send(MONITOR_TOPIC, order.messageKey(root, name),
+        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, name),
                 new Change(root.relativize(name), size,
                         fileState, changes));
         System.out.println("send to stream -> MODIFY");
     }
 
     private void emitCreate(JsonProducer producer, Path name) throws JsonProcessingException {
-        producer.send(MONITOR_TOPIC, order.messageKey(root, name),
-                new Create(root.relativize(name)));
+        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, name),
+                new Create(root.relativize(name), name.toFile().isDirectory()));
         System.out.println("send to stream -> CREATE");
     }
 
     private void emitDelete(JsonProducer producer, Path name) throws JsonProcessingException {
-        producer.send(MONITOR_TOPIC, order.messageKey(root, name),
+        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, name),
                 new Delete(root.relativize(name)));
         System.out.println("send to stream -> DELETE");
     }
 
     private void emitRename(JsonProducer producer, Path oldName, Path newName) throws JsonProcessingException {
-        producer.send(MONITOR_TOPIC, order.messageKey(root, oldName),
+        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, oldName),
                 new RenameFrom(root.relativize(oldName), root.relativize(newName)));
-        producer.send(MONITOR_TOPIC, order.messageKey(root, newName),
+        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, newName),
                 new RenameTo(root.relativize(oldName), root.relativize(newName)));
         System.out.println("send to stream -> RENAME");
     }
@@ -306,12 +308,33 @@ public class Monitor {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length == 0 || args.length > 1) {
+        if (args.length == 0) {
             usage();
         }
+        Map<String, String> map = new HashMap<>();
+
+
+        for (String val : args) {
+            String[] arr = val.split(":");
+
+            if (!map.containsKey(arr[0]))
+                map.put(arr[0], arr[1]);
+            else {
+                throw new RuntimeException("Try to add existed volume");
+            }
+        }
+
 
         // registerDirectory directory and process its events
-        Path dir = Paths.get(args[0]);
-        new Monitor(dir, OrderingRule.VOLUME).processEvents();
+        for (Map.Entry<String, String> pair : map.entrySet()) {
+            new Thread(() -> {
+                Path dir = Paths.get(pair.getValue());
+                try {
+                    new Monitor(pair.getKey(), dir, OrderingRule.VOLUME).processEvents();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
     }
 }
