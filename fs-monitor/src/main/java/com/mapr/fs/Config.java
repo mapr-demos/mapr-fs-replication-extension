@@ -72,4 +72,8 @@ public class Config {
     public Properties getProperties() {
         return properties;
     }
+
+    public static String getMonitorTopic(String volumeName) {
+        return String.format(Config.MONITOR_TOPIC, volumeName);
+    }
 }

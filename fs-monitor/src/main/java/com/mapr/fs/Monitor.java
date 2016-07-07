@@ -3,12 +3,16 @@ package com.mapr.fs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Maps;
 import com.mapr.fs.messages.*;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
@@ -17,6 +21,9 @@ import static java.nio.file.StandardWatchEventKinds.*;
  * to a MapR stream.
  */
 public class Monitor {
+
+    private static final Logger log = Logger.getLogger(Monitor.class);
+
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
     private Path root;
@@ -46,7 +53,7 @@ public class Monitor {
     }
 
     private void watch(Path dir) throws IOException {
-        System.out.println("Watching initiated");
+        log.info("Watching initiated");
         Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -55,7 +62,7 @@ public class Monitor {
                 return FileVisitResult.CONTINUE;
             }
         });
-        System.out.println("File tree built");
+        log.info("File tree built");
     }
 
     Map<Path, FileState> state = Maps.newHashMap();
@@ -66,7 +73,7 @@ public class Monitor {
      */
     Monitor(String volumeName, Path dir, OrderingRule order) throws IOException {
         this.volumeName = volumeName;
-        System.out.println(volumeName);
+        log.info(volumeName);
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
         changeBuffer = new LinkedList<>();
@@ -97,7 +104,7 @@ public class Monitor {
 
             Path dir = keys.get(key);
             if (dir == null) {
-                System.err.println("WatchKey not recognized!!");
+                log.error("WatchKey not recognized!!");
                 continue;
             }
 
@@ -161,8 +168,8 @@ public class Monitor {
 
     private void processModifyEvent(Path watchDir, WatchEvent<Path> event) {
         Path filePath = watchDir.resolve(event.context());
-        System.out.println(ENTRY_MODIFY);
-        System.out.println(filePath);
+        log.info(ENTRY_MODIFY);
+        log.info(filePath);
 
         // emit any buffered changes
         try {
@@ -176,7 +183,7 @@ public class Monitor {
     }
 
     private void processCreateEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
-        System.out.println(ENTRY_CREATE);
+        log.info(ENTRY_CREATE);
         // check buffer in case this is the second half of a rename
         Path filePath = watchDir.resolve(event.context());
         Object k = FileState.fileKey(filePath);
@@ -198,7 +205,7 @@ public class Monitor {
 
     private void processDeleteEvent(Path watchDir, WatchEvent<Path> event) {
         Path filePath = watchDir.resolve(event.context());
-        System.out.println(ENTRY_DELETE);
+        log.info(ENTRY_DELETE);
         // buffer in case of a rename
         FileOperation op = FileOperation.delete(watchDir, event);
         changeBuffer.add(op);
@@ -229,7 +236,7 @@ public class Monitor {
                 emitRename(producer, op.getDeletePath(), op.getCreatePath());
                 // TODO need to check here for changes just before the rename that might have been missed
             } else if (op.isOldDelete()) {
-                System.out.printf("%.3f s old\n", System.nanoTime() / 1e9 - op.start);
+                log.info(String.format("%.3f s old\n", System.nanoTime() / 1e9 - op.start));
 
                 emitDelete(producer, op.getDeletePath());
             } else if (op.isOldCreate()) {
@@ -264,30 +271,30 @@ public class Monitor {
     }
 
     private void emitModify(JsonProducer producer, Path name, Long size, List<Long> fileState, List<String> changes) throws JsonProcessingException {
-        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, name),
+        producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
                 new Change(root.relativize(name), size,
                         fileState, changes));
-        System.out.println("send to stream -> MODIFY");
+        log.info("send to stream -> MODIFY");
     }
 
     private void emitCreate(JsonProducer producer, Path name) throws JsonProcessingException {
-        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, name),
+        producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
                 new Create(root.relativize(name), name.toFile().isDirectory()));
-        System.out.println("send to stream -> CREATE");
+        log.info("send to stream -> CREATE");
     }
 
     private void emitDelete(JsonProducer producer, Path name) throws JsonProcessingException {
-        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, name),
+        producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
                 new Delete(root.relativize(name)));
-        System.out.println("send to stream -> DELETE");
+        log.info("send to stream -> DELETE");
     }
 
     private void emitRename(JsonProducer producer, Path oldName, Path newName) throws JsonProcessingException {
-        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, oldName),
+        producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, oldName),
                 new RenameFrom(root.relativize(oldName), root.relativize(newName)));
-        producer.send(String.format(Config.MONITOR_TOPIC, volumeName), order.messageKey(root, newName),
+        producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, newName),
                 new RenameTo(root.relativize(oldName), root.relativize(newName)));
-        System.out.println("send to stream -> RENAME");
+        log.info("send to stream -> RENAME");
     }
 
     /**
@@ -303,7 +310,7 @@ public class Monitor {
     }
 
     static void usage() {
-        System.err.println("usage: java WatchDir dir");
+        log.error("usage: [<volumeName1>:<path1>] [<volume2>:<path2>] ...");
         System.exit(-1);
     }
 
@@ -311,6 +318,9 @@ public class Monitor {
         if (args.length == 0) {
             usage();
         }
+
+        BasicConfigurator.configure();
+
         Map<String, String> map = new HashMap<>();
 
 
@@ -320,21 +330,23 @@ public class Monitor {
             if (!map.containsKey(arr[0]))
                 map.put(arr[0], arr[1]);
             else {
-                throw new RuntimeException("Try to add existed volume");
+                throw new IllegalArgumentException("Trying to add existed volume");
             }
         }
 
+        ExecutorService service = Executors.newFixedThreadPool(map.size());
 
         // registerDirectory directory and process its events
         for (Map.Entry<String, String> pair : map.entrySet()) {
-            new Thread(() -> {
+            service.submit(() -> {
                 Path dir = Paths.get(pair.getValue());
                 try {
                     new Monitor(pair.getKey(), dir, OrderingRule.VOLUME).processEvents();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error(e);
+                    service.shutdownNow();
                 }
-            }).start();
+            });
         }
     }
 }

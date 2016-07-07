@@ -3,31 +3,18 @@ package com.mapr.fs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Consumer {
-    public static void main(String[] args) {
-        Map<String, String> map = new HashMap<>();
 
-        for (String val : args) {
-            String[] arr = val.split(":");
-
-            if (!map.containsKey(arr[0]))
-                map.put(arr[0], arr[1]);
-            else {
-                throw new RuntimeException("Try to add existed volume");
-            }
-        }
-
-        for (Map.Entry<String, String> pair : map.entrySet()) {
-            new Thread(() -> {
-                new Gateway(pair.getKey(), pair.getValue()).processEvents();
-            }).start();
-        }
-    }
+    private static final Logger log = Logger.getLogger(Consumer.class);
 
     public static class Gateway {
 
@@ -37,14 +24,14 @@ public class Consumer {
 
         public Gateway(String volumeName, String path) {
             this.volumeName = volumeName;
-            this.topic = String.format(Config.MONITOR_TOPIC, volumeName);
+            this.topic = Config.getMonitorTopic(volumeName);
             this.path = path;
 
-            System.out.println(volumeName + " gateway configured with path " + path);
+            log.info(volumeName + " gateway configured with path " + path);
         }
 
         private void processEvents() {
-            System.out.println(volumeName + " gateway started");
+            log.info(volumeName + " gateway started");
             KafkaConsumer<String, String> consumer = null;
             try {
 
@@ -55,7 +42,7 @@ public class Consumer {
                 while (true) {
                     ConsumerRecords<String, String> records = consumer.poll(200);
                     for (ConsumerRecord<String, String> record : records) {
-                        System.out.println(volumeName + ": " + record);
+                        log.info(volumeName + ": " + record);
                     }
                     consumer.commitSync();
                 }
@@ -64,6 +51,36 @@ public class Consumer {
                     consumer.close();
                 }
             }
+        }
+    }
+
+
+    public static void main(String[] args) {
+        Map<String, String> map = new HashMap<>();
+
+        BasicConfigurator.configure();
+
+        for (String val : args) {
+            String[] arr = val.split(":");
+
+            if (!map.containsKey(arr[0]))
+                map.put(arr[0], arr[1]);
+            else {
+                log.warn("Trying to add existed volume");
+//                    throw new IllegalArgumentException("Trying to add existed volume");
+            }
+        }
+
+        ExecutorService service = Executors.newFixedThreadPool(map.size());
+
+        for (Map.Entry<String, String> pair : map.entrySet()) {
+
+            service.submit(() ->
+                new Gateway(pair.getKey(), pair.getValue()).processEvents() );
+
+//            new Thread(() -> {
+//                new Gateway(pair.getKey(), pair.getValue()).processEvents();
+//            }).start();
         }
     }
 }

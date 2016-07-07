@@ -103,7 +103,7 @@ public class MonitorTest extends TestCase {
             ObjectMapper mapper = Util.getObjectMapper();
             String[] types = {"create", "change", "change"};
             for (int i = 0; i < 3; i++) {
-                assertEquals(Config.MONITOR_TOPIC, history.get(i).topic());
+                assertEquals(Config.getMonitorTopic("volume"), history.get(i).topic());
                 assertEquals(dir.getAbsolutePath(), history.get(i).key());
                 JsonNode c = mapper.readTree(history.get(i).value());
                 assertEquals(f.toString(), c.get("name").asText());
@@ -155,7 +155,7 @@ public class MonitorTest extends TestCase {
             String[] types = {"create", "change", "rename_from", "rename_to"};
             String[] keys = {f1.toString(), f1.toString(), f1.toString(), f2.toString()};
             for (int i = 0; i < 3; i++) {
-                assertEquals(Config.MONITOR_TOPIC, history.get(i).topic());
+                assertEquals(Config.getMonitorTopic("volume"), history.get(i).topic());
                 assertEquals(keys[i], history.get(i).key());
                 JsonNode c = mapper.readTree(history.get(i).value());
                 assertEquals(f1.toString(), c.get("name").asText());
