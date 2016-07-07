@@ -1,5 +1,6 @@
 package com.mapr.fs;
 
+import com.mapr.fs.events.EventFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -21,12 +22,13 @@ public class Consumer {
         private final String topic;
         private final String volumeName;
         private final String path;
+        private final EventFactory factory;
 
         public Gateway(String volumeName, String path) {
             this.volumeName = volumeName;
             this.topic = Config.getMonitorTopic(volumeName);
             this.path = path;
-
+            factory = new EventFactory();
             log.info(volumeName + " gateway configured with path " + path);
         }
 
