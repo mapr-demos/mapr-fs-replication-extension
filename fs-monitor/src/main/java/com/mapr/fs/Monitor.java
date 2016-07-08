@@ -168,8 +168,7 @@ public class Monitor {
 
     private void processModifyEvent(Path watchDir, WatchEvent<Path> event) {
         Path filePath = watchDir.resolve(event.context());
-        log.info(ENTRY_MODIFY);
-        log.info(filePath);
+        log.info(ENTRY_MODIFY + ": " + filePath);
 
         // emit any buffered changes
         try {
@@ -183,9 +182,10 @@ public class Monitor {
     }
 
     private void processCreateEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
-        log.info(ENTRY_CREATE);
         // check buffer in case this is the second half of a rename
         Path filePath = watchDir.resolve(event.context());
+        log.info(ENTRY_CREATE + ": " + filePath);
+
         Object k = FileState.fileKey(filePath);
         inodes.put(filePath, k);
 
@@ -205,7 +205,7 @@ public class Monitor {
 
     private void processDeleteEvent(Path watchDir, WatchEvent<Path> event) {
         Path filePath = watchDir.resolve(event.context());
-        log.info(ENTRY_DELETE);
+        log.info(ENTRY_DELETE + ": " + filePath);
         // buffer in case of a rename
         FileOperation op = FileOperation.delete(watchDir, event);
         changeBuffer.add(op);
@@ -272,7 +272,7 @@ public class Monitor {
 
     private void emitModify(JsonProducer producer, Path name, Long size, List<Long> fileState, List<String> changes) throws JsonProcessingException {
         producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
-                new Change(root.relativize(name), size,
+                new Modify(root.relativize(name), size,
                         fileState, changes));
         log.info("send to stream -> MODIFY");
     }
@@ -338,15 +338,19 @@ public class Monitor {
 
         // registerDirectory directory and process its events
         for (Map.Entry<String, String> pair : map.entrySet()) {
-            service.submit(() -> {
-                Path dir = Paths.get(pair.getValue());
-                try {
-                    new Monitor(pair.getKey(), dir, OrderingRule.VOLUME).processEvents();
-                } catch (IOException e) {
-                    log.error(e);
-                    service.shutdownNow();
-                }
-            });
+            try {
+                service.submit(() -> {
+                    Path dir = Paths.get(pair.getValue());
+                    try {
+                        new Monitor(pair.getKey(), dir, OrderingRule.VOLUME).processEvents();
+                    } catch (IOException e) {
+                        log.error(e);
+                        service.shutdownNow();
+                    }
+                });
+            } catch (Exception e) {
+                log.error(e);
+            }
         }
     }
 }

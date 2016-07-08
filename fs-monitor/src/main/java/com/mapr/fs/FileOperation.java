@@ -40,7 +40,7 @@ class FileOperation {
                 if (changes != null) {
                     this.changes = changes;
                 } else {
-                    throw new IllegalArgumentException("Modify events must have associated changes");
+                    throw new IllegalArgumentException("ModifyEvent events must have associated changes");
                 }
             } else {
                 this.changes = null;

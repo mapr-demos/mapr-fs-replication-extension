@@ -7,7 +7,7 @@ import java.nio.file.Path;
 /**
  * Indicates a file has been created.
  */
-public class Create {
+public class Create implements Message {
     @JsonProperty("type")
     public final String type = "create";
 
@@ -16,6 +16,9 @@ public class Create {
 
     @JsonProperty("directory")
     public boolean directory;
+
+    public Create() {
+    }
 
     public Create(Path name, boolean directory) {
         this.name = name.toString();

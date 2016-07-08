@@ -6,6 +6,7 @@ import com.google.common.io.Resources;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +16,8 @@ import java.util.Properties;
  * Like a KafkaProducer, but includes magical conversion of POJO's to JSON when sending
  */
 public class JsonProducer {
+    private static final Logger log = Logger.getLogger(JsonProducer.class);
+
     protected final Producer<String, String> delegate;
     private final ObjectMapper mapper = Util.getObjectMapper();
     private Config config;
@@ -39,10 +42,11 @@ public class JsonProducer {
     }
 
     public void send(String topic, Object x) throws JsonProcessingException {
-        delegate.send(new ProducerRecord<>(config.getTopicName(topic), mapper.writeValueAsString(x)));
+        send(topic, null, x);
     }
 
     public void send(String topic, String key, Object x) throws JsonProcessingException {
+        log.info("Sending to stream: topic<" + config.getTopicName(topic) + "> key<" + key + ">");
         delegate.send(new ProducerRecord<>(config.getTopicName(topic), key, mapper.writeValueAsString(x)));
     }
 

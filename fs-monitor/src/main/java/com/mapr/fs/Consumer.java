@@ -1,5 +1,7 @@
 package com.mapr.fs;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -7,6 +9,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,14 +43,19 @@ public class Consumer {
                 Config config = new Config("kafka.consumer.", "kafka.common.");
 
                 consumer = new KafkaConsumer<>(config.getProperties());
+                log.info("Subscribing to the topic " + config.getTopicName(topic));
                 consumer.subscribe(Arrays.asList(config.getTopicName(topic)));
                 while (true) {
                     ConsumerRecords<String, String> records = consumer.poll(200);
                     for (ConsumerRecord<String, String> record : records) {
                         log.info(volumeName + ": " + record);
+                        Event event = factory.parseEvent(record.value());
+                        event.execute(path);
                     }
                     consumer.commitSync();
                 }
+            } catch (IOException e) {
+                log.error(e);
             } finally {
                 if (consumer != null) {
                     consumer.close();

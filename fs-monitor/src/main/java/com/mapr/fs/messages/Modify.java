@@ -8,9 +8,9 @@ import java.util.List;
 /**
  * Show that a file has been changed
  */
-public class Change {
+public class Modify implements Message {
     @JsonProperty("type")
-    public final String type = "change";
+    public final String type = "modify";
 
     @JsonProperty("name")
     public String name;
@@ -21,7 +21,10 @@ public class Change {
     @JsonProperty("changesContent")
     public List<String> changedBlocksContent;
 
-    public Change(Path name, Long fileSize, List<Long> changedBlocks, List<String> changedBlocksContent) {
+    public Modify() {
+    }
+
+    public Modify(Path name, Long fileSize, List<Long> changedBlocks, List<String> changedBlocksContent) {
         this.name = name.toString();
         this.fileSize = fileSize;
         this.changedBlocks = changedBlocks;
