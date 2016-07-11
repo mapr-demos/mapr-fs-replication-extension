@@ -91,7 +91,7 @@ public class Monitor {
         changeBuffer = new LinkedList<>();
         changeMap = new HashMap<>();
 
-        JsonProducer producer = new JsonProducer("kafka.producer.", "kafka.common.");
+        startBufferProcessor();
 
         while (true) {
             // wait for key to be signalled
@@ -118,7 +118,6 @@ public class Monitor {
 
                 //noinspection unchecked
                 bufferEvent(dir, (WatchEvent<Path>) event);
-                processBufferedEvents(producer);
 
 
                 // if directory is created, watch it, too
@@ -144,6 +143,21 @@ public class Monitor {
                 }
             }
         }
+    }
+
+    private void startBufferProcessor() {
+        new Thread(()->{
+            JsonProducer producer = new JsonProducer("kafka.producer.", "kafka.common.");
+
+            while (true) {
+                try {
+                    processBufferedEvents(producer);
+                    Thread.sleep(1000);
+                } catch (IOException | InterruptedException e ) {
+                    log.error(e);
+                }
+            }
+        }).start();
     }
 
     /**
@@ -352,5 +366,8 @@ public class Monitor {
                 log.error(e);
             }
         }
+
+
+
     }
 }
