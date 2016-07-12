@@ -2,9 +2,7 @@ package com.mapr.fs.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mapr.fs.Util;
-import com.mapr.fs.messages.Create;
-import com.mapr.fs.messages.Delete;
-import com.mapr.fs.messages.Modify;
+import com.mapr.fs.messages.*;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,6 +22,12 @@ public class EventFactory {
 
         } else if(type.equalsIgnoreCase("modify")){
             return new ModifyEvent(mapper.readValue(data, Modify.class));
+
+        } else if(type.equalsIgnoreCase("rename_to")) {
+            return new RenameToEvent(mapper.readValue(data, RenameTo.class));
+
+        } else if(type.equalsIgnoreCase("rename_from")) {
+            return new RenameFromEvent(mapper.readValue(data, RenameFrom.class));
         }
 
         return null;

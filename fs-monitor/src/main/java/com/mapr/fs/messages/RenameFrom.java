@@ -12,9 +12,9 @@ public class RenameFrom implements Message {
     public final String type = "rename_from";
 
     @JsonProperty("oldName")
-    String oldName;
+    public String oldName;
     @JsonProperty("newName")
-    String newName;
+    public String newName;
 
     public RenameFrom() {
     }
