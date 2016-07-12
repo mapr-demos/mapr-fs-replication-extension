@@ -112,4 +112,21 @@ class FileOperation {
     public List<Long> getModifiedOffsets() {
         return changes;
     }
+
+    @Override
+    public String toString() {
+        if (delete != null && create != null) {
+            assert modify == null;
+            return String.format("Rename in %s from %s to %s", watchDir, delete.context(), create.context());
+        } else if (delete != null) {
+            assert modify == null;
+            return String.format("Delete in %s of %s", watchDir, delete.context());
+        } else if (create != null) {
+            assert modify == null;
+            return String.format("Create in %s of %s", watchDir, create.context());
+        } else {
+            assert modify != null;
+            return String.format("Modify in %s of %s", watchDir, modify.context());
+        }
+    }
 }

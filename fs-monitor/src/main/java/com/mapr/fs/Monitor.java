@@ -119,7 +119,6 @@ public class Monitor {
                 //noinspection unchecked
                 bufferEvent(dir, (WatchEvent<Path>) event);
 
-
                 // if directory is created, watch it, too
                 if ((kind == ENTRY_CREATE)) {
                     try {
@@ -145,6 +144,7 @@ public class Monitor {
         }
     }
 
+    //TODO why is buffer process in another thread? That makes testing much harder.
     private void startBufferProcessor() {
         new Thread(()->{
             JsonProducer producer = new JsonProducer("kafka.producer.", "kafka.common.");
@@ -152,6 +152,7 @@ public class Monitor {
             while (true) {
                 try {
                     processBufferedEvents(producer);
+                    // TODO how is this sleep justified? Shouldn't we wake up as soon as the next timeout will expire?
                     Thread.sleep(1000);
                 } catch (IOException | InterruptedException e ) {
                     log.error(e);
@@ -166,7 +167,7 @@ public class Monitor {
      * Exposed for testing only.
      *
      *
-     * @param watchDir
+     * @param watchDir  Directory being watched
      * @param event The event to merge
      * @throws IOException If we can't stat the file to get a unique key
      */
@@ -180,19 +181,20 @@ public class Monitor {
         }
     }
 
-    private void processModifyEvent(Path watchDir, WatchEvent<Path> event) {
+    private void processDeleteEvent(Path watchDir, WatchEvent<Path> event) {
         Path filePath = watchDir.resolve(event.context());
-        log.info(ENTRY_MODIFY + ": " + filePath);
+        log.info(ENTRY_DELETE + ": " + filePath);
 
-        // emit any buffered changes
-        try {
-            FileState oldState = state.get(filePath);
-            FileState newState = FileState.getFileInfo(filePath);
-            changeBuffer.add(FileOperation.modify(watchDir, event, newState.changedBlockOffsets(oldState)));
-            state.put(filePath, newState);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+        // TODO: is this correct? I added it during a merge with other code.
+        // buffer in case of a rename
+        FileOperation op = FileOperation.delete(watchDir, event);
+        changeBuffer.add(op);
+
+        // also record pointer back to this op so that a later create can be added
+        Object key = inodes.get(filePath);
+        if (key != null) {
+            changeMap.put(key, op);
+        } // TODO should this have an else to record an unexpected event?
     }
 
     private void processCreateEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
@@ -211,24 +213,21 @@ public class Monitor {
             FileState fs = state.remove(op.getDeletePath());
             changeMap.remove(k);
             state.put(filePath, fs);
+            // TODO should we be buffering the create operation in changeBuffer?
         } else {
             // this is a stand-alone creation
             changeBuffer.add(FileOperation.create(watchDir, event));
         }
     }
 
-    private void processDeleteEvent(Path watchDir, WatchEvent<Path> event) {
+    private void processModifyEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
         Path filePath = watchDir.resolve(event.context());
-        log.info(ENTRY_DELETE + ": " + filePath);
-        // buffer in case of a rename
-        FileOperation op = FileOperation.delete(watchDir, event);
-        changeBuffer.add(op);
+        log.info(ENTRY_MODIFY + ": " + filePath);
 
-        // also record pointer back to this op so that a later create can be added
-        Object key = inodes.get(filePath);
-        if (key != null) {
-            changeMap.put(key, op);
-        }
+        FileState oldState = state.get(filePath);
+        FileState newState = FileState.getFileInfo(filePath);
+        changeBuffer.add(FileOperation.modify(watchDir, event, newState.changedBlockOffsets(oldState)));
+        state.put(filePath, newState);
     }
 
     /**
@@ -250,10 +249,10 @@ public class Monitor {
                 emitRename(producer, op.getDeletePath(), op.getCreatePath());
                 // TODO need to check here for changes just before the rename that might have been missed
             } else if (op.isOldDelete()) {
-                log.info(String.format("%.3f s old\n", System.nanoTime() / 1e9 - op.start));
-
+                log.info(String.format("Op %s is %.3f s old\n", op, System.nanoTime() / 1e9 - op.start));
                 emitDelete(producer, op.getDeletePath());
             } else if (op.isOldCreate()) {
+                log.info(String.format("Op %s is %.3f s old\n", op, System.nanoTime() / 1e9 - op.start));
                 emitCreate(producer, op.getCreatePath());
             } else if (op.isModify()) {
                 // handling changes is a bit tricky because the file may have been deleted
@@ -261,6 +260,7 @@ public class Monitor {
                 Path changed = op.getModifyPath();
                 FileState newState = FileState.getFileInfo(changed);
                 if (newState != null) {
+                    log.info(String.format("Op %s is %.3f s old\n", op, System.nanoTime() / 1e9 - op.start));
                     emitModify(producer, changed, newState.getFileSize(), op.getModifiedOffsets(),
                             newState.changedBlockContentEncoded(op.getModifiedOffsets()));
                     state.put(changed, newState);
@@ -286,8 +286,7 @@ public class Monitor {
 
     private void emitModify(JsonProducer producer, Path name, Long size, List<Long> fileState, List<String> changes) throws JsonProcessingException {
         producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
-                new Modify(root.relativize(name), size,
-                        fileState, changes));
+                new Modify(root.relativize(name), size, fileState, changes));
         log.info("send to stream -> MODIFY");
     }
 
@@ -366,8 +365,5 @@ public class Monitor {
                 log.error(e);
             }
         }
-
-
-
     }
 }
