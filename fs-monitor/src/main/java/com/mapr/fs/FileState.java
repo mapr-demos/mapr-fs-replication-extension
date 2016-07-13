@@ -96,10 +96,13 @@ public class FileState {
     public List<String> changedBlockContentEncoded(List<Long> offsets) throws IOException {
         List<String> r = new ArrayList<>();
         RandomAccessFile input = new RandomAccessFile(this.path.toFile(), "r");
-        for(long offset : offsets) {
+        for (long offset : offsets) {
             byte[] buffer = new byte[BLOCK_SIZE];
             input.seek(offset);
             int size = input.read(buffer);
+            if (size == -1) {
+                throw new EOFException(String.format("Unexpected end of file at offset %d", offset));
+            }
             if (size < buffer.length) {
                 buffer = Arrays.copyOf(buffer, size);
             }
