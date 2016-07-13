@@ -1,6 +1,7 @@
 package com.mapr.fs.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 
 import java.nio.file.Path;
 
@@ -8,17 +9,29 @@ import java.nio.file.Path;
  * Indicates a file has been created.
  */
 public class Create implements Message {
-    @JsonProperty("name")
     public String name;
-
-    @JsonProperty("directory")
     public boolean directory;
 
-    public Create() {
+    public Create(Path name, boolean directory) {
+        this(name.toString(), directory);
     }
 
-    public Create(Path name, boolean directory) {
-        this.name = name.toString();
+    public Create(@JsonProperty("name") String name, @JsonProperty("directory") boolean directory) {
+        this.name = name;
         this.directory = directory;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Create create = (Create) o;
+        return Objects.equal(directory, create.directory) &&
+                Objects.equal(name, create.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name, directory);
     }
 }
