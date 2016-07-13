@@ -29,7 +29,7 @@ public class RenameToEvent implements Event {
         if(oldFile.renameTo(newFile)){
             log.info("Rename successful: " + oldFilePath + " -> " + newFilePath);
         }else{
-            log.info("Rename failed: " + oldFilePath + " -> " + newFilePath);
+            log.error("Rename failed: " + oldFilePath + " -> " + newFilePath);
         }
     }
 }

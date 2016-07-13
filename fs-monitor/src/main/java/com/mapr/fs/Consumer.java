@@ -1,6 +1,5 @@
 package com.mapr.fs;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -8,6 +7,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
+
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.ResourceHandler;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -65,7 +68,7 @@ public class Consumer {
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Map<String, String> map = new HashMap<>();
 
         BasicConfigurator.configure();
@@ -77,7 +80,6 @@ public class Consumer {
                 map.put(arr[0], arr[1]);
             else {
                 log.warn("Trying to add existed volume");
-//                    throw new IllegalArgumentException("Trying to add existed volume");
             }
         }
 
@@ -87,10 +89,31 @@ public class Consumer {
 
             service.submit(() ->
                 new Gateway(pair.getKey(), pair.getValue()).processEvents() );
-
-//            new Thread(() -> {
-//                new Gateway(pair.getKey(), pair.getValue()).processEvents();
-//            }).start();
         }
+
+        startUI();
+    }
+
+    public static void startUI() throws Exception {
+        String httpPort = System.getProperty("demo.http.port", "8080");
+
+
+        log.info("================================================");
+        log.info("   Starting UI on port "+ httpPort);
+        log.info("================================================\n\n");
+
+        Server server = new Server(Integer.parseInt(httpPort));
+
+        ResourceHandler resourceHandler = new ResourceHandler();
+        resourceHandler.setDirectoriesListed(true);
+        resourceHandler.setResourceBase("./fs-monitor/src/main/resources/webapp");
+
+        ContextHandler contextHandler = new ContextHandler("/test");
+        contextHandler.setHandler(resourceHandler);
+
+        server.setHandler(contextHandler);
+
+        server.start();
+        server.join();
     }
 }
