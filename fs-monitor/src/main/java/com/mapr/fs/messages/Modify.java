@@ -9,9 +9,6 @@ import java.util.List;
  * Show that a file has been changed
  */
 public class Modify implements Message {
-    @JsonProperty("type")
-    public final String type = "modify";
-
     @JsonProperty("name")
     public String name;
     @JsonProperty("size")
