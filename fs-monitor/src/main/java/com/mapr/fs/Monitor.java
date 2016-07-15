@@ -65,7 +65,7 @@ public class Monitor {
         log.info("File tree built");
     }
 
-    Map<Path, FileState> state = Maps.newHashMap();
+    MonitorDAO monitorDao = new MonitorDAO();
     Map<Path, Object> inodes = Maps.newHashMap();
 
     /**
@@ -210,9 +210,9 @@ public class Monitor {
             // this is the second part of the rename
             op.addCreate(event);
             inodes.remove(op.getDeletePath());
-            FileState fs = state.remove(op.getDeletePath());
+            FileState fs = monitorDao.remove(op.getDeletePath());
             changeMap.remove(k);
-            state.put(filePath, fs);
+            monitorDao.put(fs.toJSON());
             // TODO should we be buffering the create operation in changeBuffer?
         } else {
             // this is a stand-alone creation
@@ -224,10 +224,10 @@ public class Monitor {
         Path filePath = watchDir.resolve(event.context());
         log.info(ENTRY_MODIFY + ": " + filePath);
 
-        FileState oldState = state.get(filePath);
+        FileState oldState = monitorDao.get(filePath);
         FileState newState = FileState.getFileInfo(filePath);
         changeBuffer.add(FileOperation.modify(watchDir, event, newState.changedBlockOffsets(oldState)));
-        state.put(filePath, newState);
+        monitorDao.put(newState.toJSON());
     }
 
     /**
@@ -263,13 +263,13 @@ public class Monitor {
                     log.info(String.format("Op %s is %.3f s old\n", op, System.nanoTime() / 1e9 - op.start));
                     emitModify(producer, changed, newState.getFileSize(), op.getModifiedOffsets(),
                             newState.changedBlockContentEncoded(op.getModifiedOffsets()));
-                    state.put(changed, newState);
+                    monitorDao.put(newState.toJSON());
                 } else {
                     // if file was deleted before we saw the change,
                     // we just forget about it and any changes that might have happened
                     // just before it disappeared. We shouldn't emit the delete event here
                     // since it will be coming shortly
-                    state.remove(changed);
+                    monitorDao.remove(changed);
                 }
             } else {
                 // We can only process the leading elements of the queue.
@@ -319,7 +319,7 @@ public class Monitor {
     }
 
     public void recordFileState(Path f) throws IOException {
-        state.put(f, FileState.getFileInfo(f));
+        monitorDao.put(FileState.getFileInfo(f).toJSON());
     }
 
     static void usage() {

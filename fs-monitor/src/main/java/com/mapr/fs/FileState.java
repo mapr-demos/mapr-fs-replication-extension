@@ -3,6 +3,7 @@ package com.mapr.fs;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.htrace.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -26,6 +27,13 @@ public class FileState {
 
     public FileState(Path path) {
         this.path = path;
+    }
+
+    public FileState(Path path, long size, List<Long> hashes, Object inode) {
+        this.path = path;
+        this.size = size;
+        this.hashes = hashes;
+        this.inode = inode;
     }
 
     public static FileState getFileInfo(Path path) throws IOException {
@@ -93,6 +101,15 @@ public class FileState {
         return r;
     }
 
+    public String toJSON(){
+        return new ObjectMapper().createObjectNode()
+                .put("_id", path.toString())
+                .put("path", path.toString())
+                .put("size", size)
+                .put("inode", inode.toString())
+                .put("hashes", hashes.toString()).toString();
+    }
+
     public List<String> changedBlockContentEncoded(List<Long> offsets) throws IOException {
         List<String> r = new ArrayList<>();
         RandomAccessFile input = new RandomAccessFile(this.path.toFile(), "r");
@@ -129,5 +146,15 @@ public class FileState {
 
     public Long getFileSize() {
         return size;
+    }
+
+    @Override
+    public String toString() {
+        return "FileState{" +
+                "size=" + size +
+                ", hashes=" + hashes +
+                ", inode=" + inode +
+                ", path=" + path +
+                '}';
     }
 }
