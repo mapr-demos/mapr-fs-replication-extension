@@ -1,5 +1,6 @@
 package com.mapr.fs.events;
 
+import com.mapr.fs.ConsumerDAO;
 import com.mapr.fs.messages.Modify;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
@@ -9,18 +10,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class ModifyEvent implements Event {
     private static final Logger log = Logger.getLogger(ModifyEvent.class);
     private Modify message;
+    private ConsumerDAO dao;
 
     public ModifyEvent(Modify message) {
         this.message = message;
+        this.dao = new ConsumerDAO();
     }
 
     @Override
     public void execute(String volumePath) throws IOException {
         String filePath = volumePath + "/" + message.name;
+        Path path = Paths.get(filePath);
 
         log.info("Executing modify event: " + filePath);
         truncate(filePath);
@@ -35,6 +41,9 @@ public class ModifyEvent implements Event {
             file.write(decoded);
         }
         file.close();
+
+        dao.put(path);
+        log.info(dao.get(path));
     }
 
     private void truncate(String filePath) throws IOException {

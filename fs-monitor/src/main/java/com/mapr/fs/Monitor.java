@@ -65,8 +65,8 @@ public class Monitor {
         log.info("File tree built");
     }
 
-    MonitorDAO monitorDao = new MonitorDAO();
-    Map<Path, Object> inodes = Maps.newHashMap();
+    private MonitorDAO monitorDao = new MonitorDAO();
+    private Map<Path, Object> inodes = Maps.newHashMap();
 
     /**
      * Creates a WatchService and registers the given directory

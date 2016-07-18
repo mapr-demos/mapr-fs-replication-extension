@@ -21,7 +21,7 @@ public class MonitorDAO {
 
     private Table fileStateTable;
 
-    private static final String APPS_DIR = "/apps/fs/db/";
+    private static final String APPS_DIR = "/apps/fs/db/monitor/";
     private static final String FILE_STATE_TABLE = APPS_DIR + "state";
 
     public MonitorDAO() {
@@ -66,7 +66,7 @@ public class MonitorDAO {
         ObjectMapper mapper = new ObjectMapper();
 
         Path path = Paths.get(document.getString("path"));
-        long size = document.getInt("size");
+        long size = (long) document.getDouble("size");
         List<Long> hashes = mapper.readValue(document.getString("hashes"), mapper.getTypeFactory().constructCollectionType(List.class, Long.class));
         Object inode = document.getValue("inode");
 
