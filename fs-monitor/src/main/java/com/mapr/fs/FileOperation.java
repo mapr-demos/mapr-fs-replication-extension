@@ -156,16 +156,6 @@ public class FileOperation {
         }
     }
 
-    @JsonProperty("doit")
-    public boolean getActualOperation() {
-        return actualOperation;
-    }
-
-    @JsonProperty("doit")
-    public void setActualOperation(boolean actualOperation) {
-        this.actualOperation = actualOperation;
-    }
-
     @JsonIgnore
     public Path getModifyPath() {
         if (modify != null) {
