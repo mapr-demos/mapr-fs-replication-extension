@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 /**
- * Created by tdunning on 7/19/16.
+ * Validate the contents of a file.
  */
 public class Verify extends RealEvent {
     @JsonProperty("name")
@@ -26,7 +26,10 @@ public class Verify extends RealEvent {
             if (content != null) {
                 byte[] ref = content.getBytes(Charsets.UTF_8);
                 byte[] actual = new byte[ref.length];
-                in.read(actual);
+                int n = in.read(actual);
+                if (n != actual.length) {
+                    throw new VerificationException("Only read " + n + " bytes, expected " + actual.length);
+                }
                 if (!Arrays.equals(ref, actual)) {
                     throw new VerificationException("Actual bytes didn't match expected at offset " + offset);
                 }
@@ -36,7 +39,10 @@ public class Verify extends RealEvent {
                 byte[] ref = new byte[size];
                 gen.nextBytes(ref);
                 byte[] actual = new byte[ref.length];
-                in.read(actual);
+                int n = in.read(actual);
+                if (n != actual.length) {
+                    throw new VerificationException("Only read " + n + " bytes, expected " + actual.length);
+                }
                 if (!Arrays.equals(ref, actual)) {
                     throw new VerificationException("Actual bytes didn't match expected at offset " + offset);
                 }

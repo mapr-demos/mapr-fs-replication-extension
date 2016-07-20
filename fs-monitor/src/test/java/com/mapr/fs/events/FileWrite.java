@@ -10,7 +10,7 @@ import java.io.OutputStreamWriter;
 import java.util.Random;
 
 /**
- * Created by tdunning on 7/19/16.
+ * Records update of a file
  */
 public class FileWrite extends RealEvent {
     @JsonProperty("name")

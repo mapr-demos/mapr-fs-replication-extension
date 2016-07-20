@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Created by tdunning on 7/19/16.
+ * Records the renaming of a file or directory
  */
 public class FileRename extends RealEvent {
     @JsonProperty("from")
@@ -22,7 +22,7 @@ public class FileRename extends RealEvent {
         if (fromFile.exists()) {
             boolean r = fromFile.renameTo(new File(to));
             if (!r) {
-                throw new IOException("File rename from " + from + " to " + to + " failed for unknown reason");
+                throw new IOException("Rename from " + from + " to " + to + " failed for unknown reason");
             }
         } else {
             throw new FileNotFoundException("No such file: " + from);

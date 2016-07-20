@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by tdunning on 7/19/16.
+ * Records creation of a directory
  */
 public class DirectoryCreate extends RealEvent {
     @JsonProperty("name")
