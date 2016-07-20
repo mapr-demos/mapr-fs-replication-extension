@@ -1,0 +1,5 @@
+[
+  {"type":"create","name":"foo","directory":true},
+  {"type":"create","name":"foo/x","directory":false},
+  {"type":"modify","name":"foo/x","fileSize":12,"changedBlocks":[0],"changedBlocksContent":["SGVsbG8gd29ybGQK"]}
+]
