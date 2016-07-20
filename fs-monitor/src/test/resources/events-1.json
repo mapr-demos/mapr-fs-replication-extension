@@ -1,0 +1,47 @@
+[
+  {
+    "type": "mkdir",
+    "time": 0.0,
+    "name": "{0}/foo"
+  },
+  {
+    "type": "watch-event",
+    "time": 0.1,
+    "event": {
+      "time": 0.1,
+      "root": "{0}",
+      "create_path": "foo",
+      "delete_path": null,
+      "modify_path": null
+    }
+  },
+  {
+    "type": "write",
+    "time": 0.2,
+    "name": "{0}/foo/x",
+    "content": "Hello world"
+  },
+  {
+    "type": "watch-event",
+    "time": 0.3,
+    "event": {
+      "time": 0.3,
+      "root": "{0}",
+      "create_path": "foo/x",
+      "delete_path": null,
+      "modify_path": null
+    }
+  },
+  {
+    "type": "watch-event",
+    "time": 0.4,
+    "event": {
+      "time": 0.4,
+      "root": "{0}",
+      "create_path": null,
+      "delete_path": null,
+      "modify_path": "foo/x",
+      "changes": [0]
+    }
+  }
+]

@@ -2,8 +2,9 @@ package com.mapr.fs;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.mapr.fs.events.SimEvent;
 import junit.framework.TestCase;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -11,19 +12,30 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
 import java.util.List;
 import java.util.Queue;
 
 public class MonitorTest extends TestCase {
-    public void testProcessEvents() throws Exception {
-
+    public void testBasicFileOps() throws IOException, InterruptedException {
+        File dir = Files.createTempDir();
+        Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME);
+        MessagePlayer.runScript("events-1.json", dir.toString(), mon);
+        JsonProducer producer = getMockProducer();
+        mon.processBufferedEvents(producer);
+        List<ProducerRecord<String, String>> history = ((MockProducer<String, String>) producer.getActualProducer()).history();
+        MessagePlayer.verifyMessages(history, "messages-1.json");
     }
 
-    public void testNoEventsTooEarly() throws Exception {
+    public void testReplay() throws IOException, InterruptedException {
+        List<SimEvent> messages = Lists.newArrayList();
+        MessagePlayer.replay("events-2.json", in-> MessagePlayer.expand(in, SimEvent.class, "root"), messages::add);
+        System.out.printf("%s\n", messages);
+    }
+
+    public void testNoEventsTooEarly() throws IOException, InterruptedException {
         File dir = Files.createTempDir();
         try {
             Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME);
@@ -31,15 +43,18 @@ public class MonitorTest extends TestCase {
             FileOperation.setMaxTimeForRename(60);
 
             Path f = new File(dir, "f1").toPath();
-            new FileOutputStream(f.toFile()).close();
+            MessagePlayer.randomGoo(f, 10200);
             mon.recordFileState(f);
 
             JsonProducer producer = getMockProducer();
 
+            ObjectMapper mapper = new ObjectMapper();
             Queue<FileOperation> buf = mon.getChangeBuffer();
-            buf.add(FileOperation.modify(dir.toPath(), Event.modify(f), ImmutableList.of(0L, 8192L)));
-            buf.add(FileOperation.delete(dir.toPath(), Event.delete(f)));
-            buf.add(FileOperation.modify(dir.toPath(), Event.modify(f), ImmutableList.of(2 * 8192L)));
+            MessagePlayer.replay("events-1.json", json -> {
+                FileOperation x = mapper.convertValue(json, FileOperation.class);
+                x.setRoot(dir);
+                return x;
+            }, buf::add);
             mon.processBufferedEvents(producer);
 
             // the first modify record should come through, but the
@@ -103,7 +118,7 @@ public class MonitorTest extends TestCase {
             ObjectMapper mapper = Util.getObjectMapper();
             String[] types = {"create", "change", "change"};
             for (int i = 0; i < 3; i++) {
-                assertEquals(Config.getMonitorTopic("volume"), history.get(i).topic());
+                assertEquals(Config.getMonitorTopic("/fsmonitor:change_test"), history.get(i).topic());
                 assertEquals(dir.getAbsolutePath(), history.get(i).key());
                 JsonNode c = mapper.readTree(history.get(i).value());
                 assertEquals(f.toString(), c.get("name").asText());
@@ -172,43 +187,4 @@ public class MonitorTest extends TestCase {
         return new JsonProducer(new MockProducer<>(true, new StringSerializer(), new StringSerializer()), config);
     }
 
-    private static class Event<T> implements WatchEvent<T> {
-        private final Kind<T> kind;
-        private final T context;
-        private int count;
-
-        Event(Kind<T> kind, T context) {
-            this.kind = kind;
-            this.context = context;
-            this.count = 1;
-        }
-
-        public Kind<T> kind() {
-            return this.kind;
-        }
-
-        public T context() {
-            return this.context;
-        }
-
-        public int count() {
-            return this.count;
-        }
-
-        void increment() {
-            ++this.count;
-        }
-
-        static Event<Path> delete(Path f) {
-            return new Event<>(StandardWatchEventKinds.ENTRY_DELETE, f);
-        }
-
-        static Event<Path> create(Path f) {
-            return new Event<>(StandardWatchEventKinds.ENTRY_CREATE, f);
-        }
-
-        static Event<Path> modify(Path f) {
-            return new Event<>(StandardWatchEventKinds.ENTRY_MODIFY, f);
-        }
-    }
 }
