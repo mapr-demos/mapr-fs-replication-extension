@@ -1,5 +1,11 @@
 package com.mapr.fs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.util.List;
@@ -10,23 +16,52 @@ import java.util.List;
  * create in close succession. As such, it is convenient to be able to "upgrade" a deletion into a
  * rename by simply adding a create event.
  */
-class FileOperation {
+@JsonIgnoreProperties({"type"})
+public class FileOperation {
     // how long should we wait for the second half of a rename?
     public static double maxTimeForRename = 0.1;
 
     // when was this even first seen? Used to decide when a delete is really just a delete rather than
     // the beginning of a rename
+    @JsonProperty("time")
     double start = System.nanoTime() / 1e9;
 
     // these hold the primitive events for this operation. Exactly one of these should be non-null,
     // except in the case of rename when both delete and create will be non-null.
-    private WatchEvent<Path> delete;
-    private WatchEvent<Path> create;
-    private final WatchEvent<Path> modify;
-    private final List<Long> changes;
+    private Event delete;
+    private Event create;
+    private Event modify;
+    private List<Long> changes;
     private Path watchDir;
 
-    private FileOperation(Path watchDir, WatchEvent<Path> delete, WatchEvent<Path> create, WatchEvent<Path> modify, List<Long> changes) {
+    public FileOperation(@JsonProperty("time") double t,
+                         @JsonProperty("root") String root,
+                         @JsonProperty("delete_path") String delete,
+                         @JsonProperty("create_path") String create,
+                         @JsonProperty("modify_path") String modify,
+                         @JsonProperty("changes") List<Long> changes) {
+
+        start = t;
+        watchDir = new File(root).toPath();
+        if (delete != null) {
+            this.delete = Event.delete(new File(delete).toPath());
+        } else {
+            this.delete = null;
+        }
+        if (create != null) {
+            this.create = Event.create(new File(create).toPath());
+        } else {
+            this.create = null;
+        }
+        if (modify != null) {
+            this.modify = Event.modify(new File(modify).toPath());
+        } else {
+            this.modify = null;
+        }
+        this.changes = changes;
+    }
+
+    private FileOperation(Path watchDir, Event delete, Event create, Event modify, List<Long> changes) {
         this.watchDir = watchDir;
         int activeCount = 0;
         activeCount += delete != null ? 1 : 0;
@@ -50,42 +85,94 @@ class FileOperation {
         }
     }
 
-    public static FileOperation delete(Path watchDir, WatchEvent<Path> event) {
+    public static FileOperation delete(Path watchDir, Event event) {
         return new FileOperation(watchDir, event, null, null, null);
     }
 
-    public static FileOperation create(Path watchDir, WatchEvent<Path> event) {
+    public static FileOperation create(Path watchDir, Event event) {
         return new FileOperation(watchDir, null, event, null, null);
     }
 
-    public static FileOperation modify(Path watchDir, WatchEvent<Path> event, List<Long> longs) {
+    public static FileOperation modify(Path watchDir, Event event, List<Long> longs) {
         return new FileOperation(watchDir, null, null, event, longs);
     }
 
-    public void addCreate(WatchEvent<Path> event) {
+    public void addCreate(Event event) {
         if (delete == null || modify != null || create != null) {
             throw new IllegalArgumentException("Can only add creation to delete event");
         }
         create = event;
     }
 
-    public void addDelete(WatchEvent<Path> event) {
+    public void addDelete(Event event) {
         if (create == null || modify != null || delete != null) {
             throw new IllegalArgumentException("Can only add deletion to creation event");
         }
         delete = event;
     }
 
+    @JsonProperty("create_path")
+    public String getCreatePathName() {
+        if (create != null) {
+            return watchDir.relativize(create.context()).toString();
+        } else {
+            return null;
+        }
+    }
+
+    @JsonIgnore
     public Path getCreatePath() {
-        return watchDir.resolve(create.context());
+        if (create != null) {
+            return watchDir.resolve(create.context());
+        } else {
+            return null;
+        }
     }
 
+    @JsonProperty("delete_path")
+    public String getDeletePathName() {
+        if (delete != null) {
+            return watchDir.relativize(delete.context()).toString();
+        } else {
+            return null;
+        }
+    }
+
+    @JsonIgnore
     public Path getDeletePath() {
-        return watchDir.resolve(delete.context());
+        if (delete != null) {
+            return watchDir.resolve(delete.context());
+        } else {
+            return null;
+        }
     }
 
+    @JsonProperty("modify_path")
+    public String getModifyPathName() {
+        if (modify != null) {
+            return watchDir.relativize(modify.context()).toString();
+        } else {
+            return null;
+        }
+    }
+
+    @JsonProperty("doit")
+    public boolean getActualOperation() {
+        return actualOperation;
+    }
+
+    @JsonProperty("doit")
+    public void setActualOperation(boolean actualOperation) {
+        this.actualOperation = actualOperation;
+    }
+
+    @JsonIgnore
     public Path getModifyPath() {
-        return watchDir.resolve(modify.context());
+        if (modify != null) {
+            return watchDir.resolve(modify.context());
+        } else {
+            return null;
+        }
     }
 
     // for testing
@@ -93,28 +180,39 @@ class FileOperation {
         FileOperation.maxTimeForRename = maxTimeForRename;
     }
 
+    @JsonIgnore
     public boolean isRename() {
         return delete != null && create != null;
     }
 
+    @JsonIgnore
     public boolean isOldDelete() {
         return delete != null && (System.nanoTime() / 1e9 - start) > maxTimeForRename;
     }
 
+    @JsonIgnore
     public boolean isOldCreate() {
         return create != null && (System.nanoTime() / 1e9 - start) > maxTimeForRename;
     }
 
+    @JsonIgnore
     public boolean isModify() {
         return modify != null;
     }
 
+    @JsonProperty("changes")
     public List<Long> getModifiedOffsets() {
         return changes;
     }
 
+    @JsonProperty("root")
+    public String getRoot() {
+        return watchDir.toString();
+    }
+
     @Override
     public String toString() {
+
         if (delete != null && create != null) {
             assert modify == null;
             return String.format("Rename in %s from %s to %s", watchDir, delete.context(), create.context());
@@ -128,5 +226,13 @@ class FileOperation {
             assert modify != null;
             return String.format("Modify in %s of %s", watchDir, modify.context());
         }
+    }
+
+    public void setRoot(File root) {
+        this.watchDir = root.toPath();
+    }
+
+    public static FileOperation fromJson(JsonNode jsonNode) {
+        return Util.getObjectMapper().convertValue(jsonNode, FileOperation.class);
     }
 }
