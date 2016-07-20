@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -88,7 +89,7 @@ public class Monitor {
      * Process all events for keys queued to the watcher
      */
     void processEvents() throws IOException {
-        changeBuffer = new LinkedList<>();
+        changeBuffer = new ConcurrentLinkedQueue<>();
         changeMap = new HashMap<>();
 
         startBufferProcessor();
@@ -327,29 +328,34 @@ public class Monitor {
         System.exit(-1);
     }
 
+    private static Map parseArguments(String[] args) throws IOException {
+        Map<String, String> map = new HashMap<>();
+
+        for (String val : args) {
+            String[] arr = val.split(":");
+
+            if (!map.containsKey(arr[0])) {
+                map.put(arr[0], arr[1]);
+                new ClusterDAO().put("cluster3", arr[0], arr[1]);
+            } else {
+                throw new IllegalArgumentException("Trying to add existed volume");
+            }
+        }
+
+        return map;
+    }
+
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             usage();
         }
 
         BasicConfigurator.configure();
-
-        Map<String, String> map = new HashMap<>();
-
-
-        for (String val : args) {
-            String[] arr = val.split(":");
-
-            if (!map.containsKey(arr[0]))
-                map.put(arr[0], arr[1]);
-            else {
-                throw new IllegalArgumentException("Trying to add existed volume");
-            }
-        }
+        Map<String, String> map = parseArguments(args);
 
         ExecutorService service = Executors.newFixedThreadPool(map.size());
 
-        // registerDirectory directory and process its events
+//         registerDirectory directory and process its events
         for (Map.Entry<String, String> pair : map.entrySet()) {
             try {
                 service.submit(() -> {

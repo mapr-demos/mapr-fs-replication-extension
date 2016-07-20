@@ -14,8 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
-public class ConsumerDAO extends DAO {
-    private static final Logger log = Logger.getLogger(Monitor.class);
+public class ConsumerDAO {
+    private static final Logger log = Logger.getLogger(Consumer.class);
 
     public Table getFileStateTable() {
         return fileStateTable;

@@ -1,5 +1,6 @@
 package com.mapr.fs;
 
+import com.mapr.fs.api.ClusterAPI;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -8,9 +9,14 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.glassfish.jersey.server.ServerProperties;
+import org.glassfish.jersey.servlet.ServletContainer;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -101,19 +107,28 @@ public class Consumer {
         log.info("================================================");
         log.info("   Starting UI on port "+ httpPort);
         log.info("================================================\n\n");
-
         Server server = new Server(Integer.parseInt(httpPort));
+
+
+        ServletHolder sh = new ServletHolder(ServletContainer.class);
+        // Set the package where the services reside
+        sh.setInitParameter(ServerProperties.PROVIDER_PACKAGES, "com.mapr.fs.api");
 
         ResourceHandler resourceHandler = new ResourceHandler();
         resourceHandler.setDirectoriesListed(true);
         resourceHandler.setResourceBase("./fs-monitor/src/main/resources/webapp");
 
-        ContextHandler contextHandler = new ContextHandler("/test");
-        contextHandler.setHandler(resourceHandler);
+        ServletContextHandler handler = new ServletContextHandler(server, "/v1");
+//        handler.addServlet(ClusterAPI.class, "/*");
+        handler.addServlet(sh, "/*");
 
-        server.setHandler(contextHandler);
+        HandlerList handlers = new HandlerList();
+        handlers.setHandlers(new Handler[]{resourceHandler, handler});
+        server.setHandler(handlers);
+
 
         server.start();
         server.join();
+        
     }
 }

@@ -1,10 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>FS</title>
+    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <style type="text/css">
+        .cluster {
+            margin: 10px;
+        }
+    </style>
 </head>
 <body>
-<h1>Hello World!</h1>
+    <h1>Replication sources</h1>
+    <div id='clusters'>
+        <!-- <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#cluster1">Cluster 1</button>
+        <div id="cluster1" class="collapse">
+        <ul>
+            <li>Volume 1.1 <input type="checkbox" name=""></li>
+            <li>Volume 1.2 <input type="checkbox" name=""></li>
+        </ul>
+        </div> -->
+    </div>
+    <div id='control'>
+        <form id="cluster_form">
+          <input type="text" name="cluster_name" placeholder="Add cluster name here" required = "true">
+          <input type="submit" value="Add">
+        </form>
+    </div>
+
+<script src="js/some.js"></script>
+
 </body>
 </html>
