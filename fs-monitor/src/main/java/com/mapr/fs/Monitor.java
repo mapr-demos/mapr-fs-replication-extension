@@ -226,7 +226,7 @@ public class Monitor {
 
         FileState oldState = monitorDao.get(filePath);
         FileState newState = FileState.getFileInfo(filePath);
-        changeBuffer.add(FileOperation.modify(watchDir, event, newState.changedBlockOffsets(oldState)));
+        changeBuffer.add(FileOperation.modify(watchDir, (Event) event, newState.changedBlockOffsets(oldState)));
         monitorDao.put(newState.toJSON());
     }
 
