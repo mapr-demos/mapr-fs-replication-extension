@@ -1,10 +1,10 @@
-package com.mapr.fs;
+package com.mapr.fs.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.log4j.Logger;
 import org.ojai.Document;
 
@@ -15,7 +15,8 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class ConsumerDAO {
-    private static final Logger log = Logger.getLogger(Consumer.class);
+
+    private static final Logger log = Logger.getLogger(ConsumerDAO.class);
 
     public Table getFileStateTable() {
         return fileStateTable;

@@ -1,4 +1,4 @@
-package com.mapr.fs;
+package com.mapr.fs.dao;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

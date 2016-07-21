@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.mapr.fs.application.Monitor;
+import com.mapr.fs.config.Config;
 import com.mapr.fs.events.SimEvent;
 import junit.framework.TestCase;
 import org.apache.kafka.clients.producer.MockProducer;

@@ -1,6 +1,6 @@
-package com.mapr.fs;
+package com.mapr.fs.application;
 
-import com.mapr.fs.api.ClusterAPI;
+import com.mapr.fs.config.Config;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -8,15 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
-
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.glassfish.jersey.server.ServerProperties;
-import org.glassfish.jersey.servlet.ServletContainer;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -25,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@SpringBootApplication
 public class Consumer {
 
     private static final Logger log = Logger.getLogger(Consumer.class);
@@ -73,7 +66,6 @@ public class Consumer {
         }
     }
 
-
     public static void main(String[] args) throws Exception {
         Map<String, String> map = new HashMap<>();
 
@@ -96,39 +88,5 @@ public class Consumer {
             service.submit(() ->
                 new Gateway(pair.getKey(), pair.getValue()).processEvents() );
         }
-
-        startUI();
-    }
-
-    public static void startUI() throws Exception {
-        String httpPort = System.getProperty("demo.http.port", "8080");
-
-
-        log.info("================================================");
-        log.info("   Starting UI on port "+ httpPort);
-        log.info("================================================\n\n");
-        Server server = new Server(Integer.parseInt(httpPort));
-
-
-        ServletHolder sh = new ServletHolder(ServletContainer.class);
-        // Set the package where the services reside
-        sh.setInitParameter(ServerProperties.PROVIDER_PACKAGES, "com.mapr.fs.api");
-
-        ResourceHandler resourceHandler = new ResourceHandler();
-        resourceHandler.setDirectoriesListed(true);
-        resourceHandler.setResourceBase("./fs-monitor/src/main/resources/webapp");
-
-        ServletContextHandler handler = new ServletContextHandler(server, "/v1");
-//        handler.addServlet(ClusterAPI.class, "/*");
-        handler.addServlet(sh, "/*");
-
-        HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[]{resourceHandler, handler});
-        server.setHandler(handlers);
-
-
-        server.start();
-        server.join();
-        
     }
 }

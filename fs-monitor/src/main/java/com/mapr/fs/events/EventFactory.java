@@ -2,7 +2,6 @@ package com.mapr.fs.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mapr.fs.Util;
-import com.mapr.fs.messages.*;
 
 import java.io.IOException;
 import java.util.Map;

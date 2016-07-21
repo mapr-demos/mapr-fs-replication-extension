@@ -1,6 +1,6 @@
 package com.mapr.fs.events;
 
-import com.mapr.fs.ConsumerDAO;
+import com.mapr.fs.dao.ConsumerDAO;
 import com.mapr.fs.messages.Modify;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;

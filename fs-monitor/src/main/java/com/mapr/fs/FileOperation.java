@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.WatchEvent;
 import java.util.List;
 
 /**
@@ -24,9 +23,9 @@ public class FileOperation {
     // when was this even first seen? Used to decide when a delete is really just a delete rather than
     // the beginning of a rename
     @JsonProperty("time")
-    double start = System.nanoTime() / 1e9;
+    public double start = System.nanoTime() / 1e9;
 
-    // these hold the primitive events for this operation. Exactly one of these should be non-null,
+    // these hold the primitive com.mapr.fs.events for this operation. Exactly one of these should be non-null,
     // except in the case of rename when both delete and create will be non-null.
     private Event delete;
     private Event create;

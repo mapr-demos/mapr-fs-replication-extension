@@ -1,8 +1,9 @@
-package com.mapr.fs;
+package com.mapr.fs.dao;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
+import com.mapr.fs.FileState;
 import org.apache.log4j.Logger;
 import org.ojai.Document;
 
@@ -13,7 +14,7 @@ import java.util.List;
 
 public class MonitorDAO {
 
-    private static final Logger log = Logger.getLogger(Monitor.class);
+    private static final Logger log = Logger.getLogger(MonitorDAO.class);
 
     public Table getFileStateTable() {
         return fileStateTable;

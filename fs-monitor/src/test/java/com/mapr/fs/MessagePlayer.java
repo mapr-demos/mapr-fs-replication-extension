@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
+import com.mapr.fs.application.Monitor;
 import com.mapr.fs.events.FileOperationNotification;
 import com.mapr.fs.events.RealEvent;
 import com.mapr.fs.events.SimEvent;

@@ -1,4 +1,4 @@
-package com.mapr.fs;
+package com.mapr.fs.config;
 
 import java.io.FileInputStream;
 import java.io.IOException;

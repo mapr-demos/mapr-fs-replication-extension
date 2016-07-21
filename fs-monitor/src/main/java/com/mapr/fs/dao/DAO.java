@@ -1,4 +1,4 @@
-package com.mapr.fs;
+package com.mapr.fs.dao;
 
 import com.mapr.db.MapRDB;
 import com.mapr.db.Table;

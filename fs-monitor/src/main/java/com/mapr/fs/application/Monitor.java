@@ -1,17 +1,21 @@
-package com.mapr.fs;
+package com.mapr.fs.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Maps;
+import com.mapr.fs.Event;
+import com.mapr.fs.FileOperation;
+import com.mapr.fs.FileState;
+import com.mapr.fs.JsonProducer;
+import com.mapr.fs.config.Config;
+import com.mapr.fs.dao.MonitorDAO;
 import com.mapr.fs.messages.*;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
-
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -72,7 +76,7 @@ public class Monitor {
     /**
      * Creates a WatchService and registers the given directory
      */
-    Monitor(String volumeName, Path dir, OrderingRule order) throws IOException {
+    public Monitor(String volumeName, Path dir, OrderingRule order) throws IOException {
         this.volumeName = volumeName;
         log.info(volumeName);
         this.watcher = FileSystems.getDefault().newWatchService();
@@ -89,7 +93,7 @@ public class Monitor {
      * Process all events for keys queued to the watcher
      */
     void processEvents() throws IOException {
-        changeBuffer = new ConcurrentLinkedQueue<>();
+        changeBuffer = new LinkedList<>();
         changeMap = new HashMap<>();
 
         startBufferProcessor();
@@ -172,7 +176,7 @@ public class Monitor {
      * @param event The event to merge
      * @throws IOException If we can't stat the file to get a unique key
      */
-    void bufferEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
+    public void bufferEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
         if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
             processDeleteEvent(watchDir, event);
         } else if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
@@ -242,7 +246,7 @@ public class Monitor {
      * @throws IOException If we can't read the file contents to find changes or we can't
      *                     send the message.
      */
-    void processBufferedEvents(JsonProducer producer) throws IOException {
+    public void processBufferedEvents(JsonProducer producer) throws IOException {
         // process any events that we can process
         while (changeBuffer.size() > 0) {
             FileOperation op = changeBuffer.peek();
@@ -315,7 +319,7 @@ public class Monitor {
      * Exposed for testing purposes.
      * @return A reference to the internal change buffer.
      */
-    Queue<FileOperation> getChangeBuffer() {
+    public Queue<FileOperation> getChangeBuffer() {
         return changeBuffer;
     }
 
@@ -336,7 +340,7 @@ public class Monitor {
 
             if (!map.containsKey(arr[0])) {
                 map.put(arr[0], arr[1]);
-                new ClusterDAO().put("cluster3", arr[0], arr[1]);
+//                new ClusterDAO().put("cluster3", arr[0], arr[1]);
             } else {
                 throw new IllegalArgumentException("Trying to add existed volume");
             }

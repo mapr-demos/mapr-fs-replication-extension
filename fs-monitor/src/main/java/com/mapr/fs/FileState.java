@@ -150,7 +150,7 @@ public class FileState {
 
     @Override
     public String toString() {
-        return "FileState{" +
+        return "com.mapr.fs.FileState{" +
                 "size=" + size +
                 ", hashes=" + hashes +
                 ", inode=" + inode +
