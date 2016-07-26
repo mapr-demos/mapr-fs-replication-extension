@@ -1,5 +1,6 @@
 package com.mapr.fs.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
@@ -9,14 +10,23 @@ import java.nio.file.Path;
  * Indicates a file has been deleted.
  */
 public class Delete implements Message {
-    public String name;
+    private String name;
 
+    @JsonCreator
     public Delete(@JsonProperty("name") String name) {
         this.name = name;
     }
 
     public Delete(Path name) {
         this(name.toString());
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

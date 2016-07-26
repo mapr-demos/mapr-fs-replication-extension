@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 
 public class CreateEvent implements Event {
     private static final Logger log = Logger.getLogger(CreateEvent.class);
+
     private Create message;
     private ConsumerDAO dao;
 
@@ -21,12 +22,12 @@ public class CreateEvent implements Event {
 
     @Override
     public void execute(String volumePath) throws IOException {
-        String filePath = volumePath + "/" + message.name;
+        String filePath = volumePath + "/" + message.getName();
         Path path = Paths.get(filePath);
 
         log.info("Executing create event: " + filePath);
         File file = new File(filePath);
-        if (!message.directory) {
+        if (!message.isDirectory()) {
             if (!file.createNewFile()) {
                 log.error("File can not be created: " + filePath);
                 return;
@@ -40,6 +41,6 @@ public class CreateEvent implements Event {
             log.info("Directory created: " + filePath);
         }
         dao.put(path);
-        log.info(dao.get(path));
+        log.info(dao.get(path).toString());
     }
 }

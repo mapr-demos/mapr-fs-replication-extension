@@ -83,7 +83,7 @@ public class MonitorTest extends TestCase {
 
             // create an empty file
             Queue<FileOperation> buf = mon.getChangeBuffer();
-            buf.add(FileOperation.create(dir.toPath(), Event.create(f)));
+            buf.add(FileOperation.create(dir.toPath(), WatchEventImpl.create(f)));
             new FileOutputStream(f.toFile()).close();
             FileState fs = FileState.getFileInfo(f);
 
@@ -92,7 +92,7 @@ public class MonitorTest extends TestCase {
                 fout.printf("testing\n");
             }
             FileState newFs = FileState.getFileInfo(f);
-            buf.add(FileOperation.modify(dir.toPath(), Event.modify(f), newFs.changedBlockOffsets(fs)));
+            buf.add(FileOperation.modify(dir.toPath(), WatchEventImpl.modify(f), newFs.changedBlockOffsets(fs)));
             fs = newFs;
 
             mon.processBufferedEvents(producer);
@@ -109,7 +109,7 @@ public class MonitorTest extends TestCase {
                 fout.printf("testing anew\n");
             }
             newFs = FileState.getFileInfo(f);
-            buf.add(FileOperation.modify(dir.toPath(), Event.modify(f), newFs.changedBlockOffsets(fs)));
+            buf.add(FileOperation.modify(dir.toPath(), WatchEventImpl.modify(f), newFs.changedBlockOffsets(fs)));
 
             // all three events should slide through now
             mon.processBufferedEvents(producer);
@@ -141,19 +141,19 @@ public class MonitorTest extends TestCase {
 
             // create an empty file
             new FileOutputStream(f1.toFile()).close();
-            mon.bufferEvent(f1, Event.create(f1));
+            mon.bufferEvent(f1, WatchEventImpl.create(f1));
 
             // modify it
             try (PrintWriter fout = new PrintWriter(f1.toFile())) {
                 fout.printf("testing\n");
             }
-            mon.bufferEvent(f1, Event.modify(f1));
+            mon.bufferEvent(f1, WatchEventImpl.modify(f1));
 
             // rename it, meaning delete and create
             Path f2 = new File(dir, "f2").toPath();
             f1.toFile().renameTo(f2.toFile());
-            mon.bufferEvent(dir.toPath(), Event.delete(f1));
-            mon.bufferEvent(dir.toPath(), Event.create(f2));
+            mon.bufferEvent(dir.toPath(), WatchEventImpl.delete(f1));
+            mon.bufferEvent(dir.toPath(), WatchEventImpl.create(f2));
 
             FileOperation.setMaxTimeForRename(1);
             Thread.sleep((long) (FileOperation.maxTimeForRename * 1000 * 2));

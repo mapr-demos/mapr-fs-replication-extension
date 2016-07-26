@@ -1,5 +1,6 @@
 package com.mapr.fs.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
@@ -10,15 +11,16 @@ import java.util.List;
  * Show that a file has been changed
  */
 public class Modify implements Message {
-    public String name;
-    public Long fileSize;
-    public List<Long> changedBlocks;
-    public List<String> changedBlocksContent;
+    private String name;
+    private Long fileSize;
+    private List<Long> changedBlocks;
+    private List<String> changedBlocksContent;
 
     public Modify(Path name, Long fileSize, List<Long> changedBlocks, List<String> changedBlocksContent) {
         this(name.toString(), fileSize, changedBlocks, changedBlocksContent);
     }
 
+    @JsonCreator
     public Modify(@JsonProperty("name") String name,
                   @JsonProperty("size") Long fileSize,
                   @JsonProperty("changes") List<Long> changedBlocks,
@@ -26,6 +28,38 @@ public class Modify implements Message {
         this.name = name;
         this.fileSize = fileSize;
         this.changedBlocks = changedBlocks;
+        this.changedBlocksContent = changedBlocksContent;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public List<Long> getChangedBlocks() {
+        return changedBlocks;
+    }
+
+    public void setChangedBlocks(List<Long> changedBlocks) {
+        this.changedBlocks = changedBlocks;
+    }
+
+    public List<String> getChangedBlocksContent() {
+        return changedBlocksContent;
+    }
+
+    public void setChangedBlocksContent(List<String> changedBlocksContent) {
         this.changedBlocksContent = changedBlocksContent;
     }
 

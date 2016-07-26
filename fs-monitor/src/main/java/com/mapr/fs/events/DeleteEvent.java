@@ -20,7 +20,7 @@ public class DeleteEvent implements Event {
 
     @Override
     public void execute(String volumePath) throws IOException {
-        String filePath = volumePath + "/" + message.name;
+        String filePath = volumePath + "/" + message.getName();
 
         log.info("Executing delete event: " + filePath);
         File file = new File(filePath);

@@ -22,8 +22,8 @@ public class RenameToEvent implements Event {
     @Override
     public void execute(String volumePath) throws IOException {
 
-        String oldFilePath = volumePath + "/" + message.oldName;
-        String newFilePath = volumePath + "/" + message.newName;
+        String oldFilePath = volumePath + "/" + message.getOldName();
+        String newFilePath = volumePath + "/" + message.getNewName();
 
         log.info("Executing rename event: " + oldFilePath + " -> " + newFilePath);
 

@@ -25,16 +25,16 @@ public class ModifyEvent implements Event {
 
     @Override
     public void execute(String volumePath) throws IOException {
-        String filePath = volumePath + "/" + message.name;
+        String filePath = volumePath + "/" + message.getName();
         Path path = Paths.get(filePath);
 
         log.info("Executing modify event: " + filePath);
         truncate(filePath);
 
         RandomAccessFile file = new RandomAccessFile(new File(filePath), "rw");
-        for (int i = 0; i < message.changedBlocks.size(); i++) {
-            long offset = message.changedBlocks.get(i);
-            String data = message.changedBlocksContent.get(i);
+        for (int i = 0; i < message.getChangedBlocks().size(); i++) {
+            long offset = message.getChangedBlocks().get(i);
+            String data = message.getChangedBlocksContent().get(i);
 
             byte[] decoded = Base64.decodeBase64(data);
             file.seek(offset);
@@ -48,7 +48,7 @@ public class ModifyEvent implements Event {
 
     private void truncate(String filePath) throws IOException {
         FileChannel chan = new FileOutputStream(new File(filePath), true).getChannel();
-        chan.truncate(message.fileSize);
+        chan.truncate(message.getFileSize());
         chan.close();
     }
 }
