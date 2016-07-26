@@ -10,12 +10,12 @@ import java.nio.file.WatchEvent;
 /**
  * Json-able version of the events that the FileWatcher gives us.
  */
-public class Event implements WatchEvent<Path> {
+public class WatchEventImpl implements WatchEvent<Path> {
     private Kind<Path> kind;
     private Path context;
     private int count = 1;
 
-    Event(Kind<Path> kind, Path context) {
+    WatchEventImpl(Kind<Path> kind, Path context) {
         this.kind = kind;
         this.context = context;
         this.count = 1;
@@ -64,15 +64,16 @@ public class Event implements WatchEvent<Path> {
         this.count = count;
     }
 
-    static Event delete(Path f) {
-        return new Event(StandardWatchEventKinds.ENTRY_DELETE, f);
+    static WatchEventImpl delete(Path f) {
+        return new WatchEventImpl(StandardWatchEventKinds.ENTRY_DELETE, f);
     }
 
-    static Event create(Path f) {
-        return new Event(StandardWatchEventKinds.ENTRY_CREATE, f);
+    static WatchEventImpl create(Path f) {
+        return new WatchEventImpl(StandardWatchEventKinds.ENTRY_CREATE, f);
     }
 
-    static Event modify(Path f) {
-        return new Event(StandardWatchEventKinds.ENTRY_MODIFY, f);
+    static WatchEventImpl modify(Path f) {
+        return new WatchEventImpl(StandardWatchEventKinds.ENTRY_MODIFY, f);
     }
 }
+

@@ -2,7 +2,6 @@ package com.mapr.fs.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Maps;
-import com.mapr.fs.Event;
 import com.mapr.fs.FileOperation;
 import com.mapr.fs.FileState;
 import com.mapr.fs.JsonProducer;
@@ -192,7 +191,7 @@ public class Monitor {
 
         // TODO: is this correct? I added it during a merge with other code.
         // buffer in case of a rename
-        FileOperation op = FileOperation.delete(watchDir, (Event) event);
+        FileOperation op = FileOperation.delete(watchDir, event);
         changeBuffer.add(op);
 
         // also record pointer back to this op so that a later create can be added
@@ -213,7 +212,7 @@ public class Monitor {
         FileOperation op = changeMap.get(k);
         if (op != null) {
             // this is the second part of the rename
-            op.addCreate((Event) event);
+            op.addCreate(event);
             inodes.remove(op.getDeletePath());
             FileState fs = monitorDao.remove(op.getDeletePath());
             changeMap.remove(k);
@@ -221,7 +220,7 @@ public class Monitor {
             // TODO should we be buffering the create operation in changeBuffer?
         } else {
             // this is a stand-alone creation
-            changeBuffer.add(FileOperation.create(watchDir, (Event) event));
+            changeBuffer.add(FileOperation.create(watchDir, event));
         }
     }
 
@@ -231,7 +230,7 @@ public class Monitor {
 
         FileState oldState = monitorDao.get(filePath);
         FileState newState = FileState.getFileInfo(filePath);
-        changeBuffer.add(FileOperation.modify(watchDir, (Event) event, newState.changedBlockOffsets(oldState)));
+        changeBuffer.add(FileOperation.modify(watchDir, event, newState.changedBlockOffsets(oldState)));
         monitorDao.put(newState.toJSON());
     }
 
@@ -340,7 +339,6 @@ public class Monitor {
 
             if (!map.containsKey(arr[0])) {
                 map.put(arr[0], arr[1]);
-//                new ClusterDAO().put("cluster3", arr[0], arr[1]);
             } else {
                 throw new IllegalArgumentException("Trying to add existed volume");
             }

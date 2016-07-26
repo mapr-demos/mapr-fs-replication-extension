@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.WatchEvent;
 import java.util.List;
 
 /**
@@ -25,11 +26,11 @@ public class FileOperation {
     @JsonProperty("time")
     public double start = System.nanoTime() / 1e9;
 
-    // these hold the primitive com.mapr.fs.events for this operation. Exactly one of these should be non-null,
+    // these hold the primitive events for this operation. Exactly one of these should be non-null,
     // except in the case of rename when both delete and create will be non-null.
-    private Event delete;
-    private Event create;
-    private Event modify;
+    private WatchEvent<Path> delete;
+    private WatchEvent<Path> create;
+    private WatchEvent<Path> modify;
     private List<Long> changes;
     private Path watchDir;
 
@@ -43,24 +44,24 @@ public class FileOperation {
         start = t;
         watchDir = new File(root).toPath();
         if (delete != null) {
-            this.delete = Event.delete(new File(delete).toPath());
+            this.delete = WatchEventImpl.delete(new File(delete).toPath());
         } else {
             this.delete = null;
         }
         if (create != null) {
-            this.create = Event.create(new File(create).toPath());
+            this.create = WatchEventImpl.create(new File(create).toPath());
         } else {
             this.create = null;
         }
         if (modify != null) {
-            this.modify = Event.modify(new File(modify).toPath());
+            this.modify = WatchEventImpl.modify(new File(modify).toPath());
         } else {
             this.modify = null;
         }
         this.changes = changes;
     }
 
-    private FileOperation(Path watchDir, Event delete, Event create, Event modify, List<Long> changes) {
+    private FileOperation(Path watchDir, WatchEvent<Path> delete, WatchEvent<Path> create, WatchEvent<Path> modify, List<Long> changes) {
         this.watchDir = watchDir;
         int activeCount = 0;
         activeCount += delete != null ? 1 : 0;
@@ -84,26 +85,26 @@ public class FileOperation {
         }
     }
 
-    public static FileOperation delete(Path watchDir, Event event) {
+    public static FileOperation delete(Path watchDir, WatchEvent<Path> event) {
         return new FileOperation(watchDir, event, null, null, null);
     }
 
-    public static FileOperation create(Path watchDir, Event event) {
+    public static FileOperation create(Path watchDir, WatchEvent<Path> event) {
         return new FileOperation(watchDir, null, event, null, null);
     }
 
-    public static FileOperation modify(Path watchDir, Event event, List<Long> longs) {
+    public static FileOperation modify(Path watchDir, WatchEvent<Path> event, List<Long> longs) {
         return new FileOperation(watchDir, null, null, event, longs);
     }
 
-    public void addCreate(Event event) {
+    public void addCreate(WatchEvent<Path> event) {
         if (delete == null || modify != null || create != null) {
             throw new IllegalArgumentException("Can only add creation to delete event");
         }
         create = event;
     }
 
-    public void addDelete(Event event) {
+    public void addDelete(WatchEvent<Path> event) {
         if (create == null || modify != null || delete != null) {
             throw new IllegalArgumentException("Can only add deletion to creation event");
         }
