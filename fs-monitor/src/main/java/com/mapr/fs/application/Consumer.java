@@ -1,6 +1,7 @@
 package com.mapr.fs.application;
 
 import com.mapr.fs.config.Config;
+import com.mapr.fs.dao.ClusterDAO;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -68,15 +69,19 @@ public class Consumer {
 
     public static void main(String[] args) throws Exception {
         Map<String, String> map = new HashMap<>();
+        ClusterDAO dao = new ClusterDAO();
 
         BasicConfigurator.configure();
 
         for (String val : args) {
             String[] arr = val.split(":");
+            String volumeName = arr[0];
+            String path = arr[1];
 
-            if (!map.containsKey(arr[0]))
-                map.put(arr[0], arr[1]);
-            else {
+            if (!map.containsKey(volumeName)) {
+                map.put(volumeName, path);
+                dao.put("cluster1", volumeName, true);
+            } else {
                 log.warn("Trying to add existed volume");
             }
         }
@@ -86,7 +91,8 @@ public class Consumer {
         for (Map.Entry<String, String> pair : map.entrySet()) {
 
             service.submit(() ->
-                new Gateway(pair.getKey(), pair.getValue()).processEvents() );
+                    new Gateway(pair.getKey(), pair.getValue()).processEvents());
+
         }
     }
 }

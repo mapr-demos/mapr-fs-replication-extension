@@ -13,7 +13,7 @@ import java.util.Arrays;
 public class ApplicationStarter {
 
     private static final Logger log = Logger.getLogger(ApplicationStarter.class);
-    
+
     public static void main(String[] args) {
         start(args);
     }

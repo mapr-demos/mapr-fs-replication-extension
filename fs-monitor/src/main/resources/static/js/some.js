@@ -1,28 +1,7 @@
-// TODO: retrieve data by API
-var clusters = [
-    {
-        name: 'Cluster 1',
-        volumes: [{
-            name: 'Volume 1.1',
-            enabled: true
-        },
-        {
-            name: 'Volume 1.2',
-            enabled: false
-        }]
-    },
-     {
-        name: 'Cluster 2',
-        volumes: []
-    }
-];
-
-function toggleCheckbox(element)
-{
+function toggleCheckbox(element) {
     console.log(element.checked);
     // TODO: make API call to change state of volume
 }
-
 
 var  div = document.getElementById( 'clusters' );
 // TODO: add name to checkbox to mark volume by API
@@ -45,10 +24,29 @@ function addCluster(cluster){
 
     div.insertAdjacentHTML( 'beforeend', result );
 }
-
+//function mapClusters(clusters)
 $(document).ready(function(){
-    clusters.forEach(function(cluster){
-        addCluster(cluster);
+    $.ajax({
+        url: "http://centos7-sn:8080/v1/clusters/",
+//        crossDomain: true,
+//        headers: {
+//            'Access-Control-Allow-Headers': '*'
+//        },
+        success: function (response) {
+            response.clusters.map(function(cluster) {
+                cluster.name = cluster.clusterName;
+                cluster.volumes = cluster.volumes.filter(function(volume) {
+                    //TODO refactor server which return null in volumes
+                    return volume;
+                }).map(function(volume) {
+                    volume.enabled = volume.replicating;
+                    return volume;
+                });
+                return cluster;
+            }).forEach(function(cluster){
+                addCluster(cluster);
+            });
+        }
     });
     var form = document.getElementById('cluster_form'); // form has to have ID: <form id="formID">
     form.noValidate = true;

@@ -150,7 +150,7 @@ public class Monitor {
 
     //TODO why is buffer process in another thread? That makes testing much harder.
     private void startBufferProcessor() {
-        new Thread(()->{
+        new Thread(() -> {
             JsonProducer producer = new JsonProducer("kafka.producer.", "kafka.common.");
 
             while (true) {
@@ -158,7 +158,7 @@ public class Monitor {
                     processBufferedEvents(producer);
                     // TODO how is this sleep justified? Shouldn't we wake up as soon as the next timeout will expire?
                     Thread.sleep(1000);
-                } catch (IOException | InterruptedException e ) {
+                } catch (IOException | InterruptedException e) {
                     log.error(e);
                 }
             }
@@ -167,12 +167,11 @@ public class Monitor {
 
     /**
      * Adds a single event to the correct queues, merging to an existing event if appropriate.
-     *
+     * <p>
      * Exposed for testing only.
      *
-     *
-     * @param watchDir  Directory being watched
-     * @param event The event to merge
+     * @param watchDir Directory being watched
+     * @param event    The event to merge
      * @throws IOException If we can't stat the file to get a unique key
      */
     public void bufferEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
@@ -238,10 +237,10 @@ public class Monitor {
      * Processes events in the order they were buffered, but only if they are ready.
      * The only things that can be not ready are deletes or creates that are waiting
      * to be promoted into rename events.
-     *
+     * <p>
      * Exposed for testing only.
      *
-     * @param producer     Where to send the events
+     * @param producer Where to send the events
      * @throws IOException If we can't read the file contents to find changes or we can't
      *                     send the message.
      */
@@ -316,6 +315,7 @@ public class Monitor {
 
     /**
      * Exposed for testing purposes.
+     *
      * @return A reference to the internal change buffer.
      */
     public Queue<FileOperation> getChangeBuffer() {
