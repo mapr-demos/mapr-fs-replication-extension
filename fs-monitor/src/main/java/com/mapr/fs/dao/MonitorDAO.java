@@ -12,24 +12,26 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static com.mapr.fs.config.Config.APPS_DIR;
+
 public class MonitorDAO {
 
     private static final Logger log = Logger.getLogger(MonitorDAO.class);
 
-    public Table getFileStateTable() {
-        return fileStateTable;
+    public Table getMonitorTable() {
+        return monitorTable;
     }
 
-    private Table fileStateTable;
+    private Table monitorTable;
 
-    private static final String APPS_DIR = "/apps/fs/db/monitor/";
-    private static final String FILE_STATE_TABLE = APPS_DIR + "state";
+    private static final String MONITOR_TABLE = APPS_DIR + "monitor/state";
 
     public MonitorDAO() {
-        this.fileStateTable = this.getTable(FILE_STATE_TABLE);
+        this.monitorTable = this.getTable(MONITOR_TABLE);
     }
 
     private static final Object lock = new Object();
+
     private Table getTable(String tableName) {
         Table table;
         log.info("Check DB");
@@ -44,13 +46,13 @@ public class MonitorDAO {
     }
 
     public void put(String json) {
-            Document document = MapRDB.newDocument(json);
-            fileStateTable.insertOrReplace(document);
-            fileStateTable.flush();
+        Document document = MapRDB.newDocument(json);
+        monitorTable.insertOrReplace(document);
+        monitorTable.flush();
     }
 
     public FileState get(Path path) throws IOException {
-        Document document = fileStateTable.findById(path.toString());
+        Document document = monitorTable.findById(path.toString());
         if (document != null) {
             return getFileState(document);
         }
@@ -59,7 +61,7 @@ public class MonitorDAO {
 
     public FileState remove(Path path) throws IOException {
         FileState fileState = get(path);
-        fileStateTable.delete(path.toString());
+        monitorTable.delete(path.toString());
         return fileState;
     }
 

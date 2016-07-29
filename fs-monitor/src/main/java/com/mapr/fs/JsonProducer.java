@@ -37,7 +37,7 @@ public class JsonProducer {
         this.config = config;
     }
 
-    public JsonProducer(String ... configPrefixes) {
+    public JsonProducer(String... configPrefixes) {
         config = new Config(configPrefixes);
         delegate = new KafkaProducer<>(config.getProperties());
     }

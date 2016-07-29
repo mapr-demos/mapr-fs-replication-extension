@@ -1,10 +1,10 @@
 package com.mapr.fs.dao;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
+import com.mapr.fs.dao.dto.ClusterDTO;
+import com.mapr.fs.dao.dto.VolumeDTO;
 import org.apache.log4j.Logger;
 import org.ojai.Document;
 import org.ojai.DocumentStream;
@@ -12,23 +12,25 @@ import org.ojai.DocumentStream;
 import java.io.IOException;
 import java.util.*;
 
+import static com.mapr.fs.config.Config.APPS_DIR;
+
 public class ClusterDAO {
     private static final Logger log = Logger.getLogger(ClusterDAO.class);
 
-    public Table getFileStateTable() {
-        return fileStateTable;
+    public Table getClusterTable() {
+        return clusterTable;
     }
 
-    private Table fileStateTable;
+    private Table clusterTable;
 
-    private static final String APPS_DIR = "/apps/fs/db/clusters/";
-    private static final String FILE_STATE_TABLE = APPS_DIR + "state";
+    private static final String CLUSTER_TABLE = APPS_DIR + "clusters/state";
 
     public ClusterDAO() {
-        this.fileStateTable = this.getTable(FILE_STATE_TABLE);
+        this.clusterTable = this.getTable(CLUSTER_TABLE);
     }
 
     private static final Object lock = new Object();
+
     private Table getTable(String tableName) {
         Table table;
         log.info("Check DB");
@@ -42,52 +44,50 @@ public class ClusterDAO {
         return table;
     }
 
-
-
-
-
-
-
     public void put(String cluster, String volume, Boolean replication) throws IOException {
-        Document document = fileStateTable.findById(cluster);
+        Document document = clusterTable.findById(cluster);
         ObjectMapper mapper = new ObjectMapper();
-        ClusterPOJO clusterPOJO;
+        ClusterDTO clusterDTO;
+        VolumeDTO volumeDTO;
+
         if (document != null) {
-            clusterPOJO = mapper.readValue(document.asJsonString(), ClusterPOJO.class);
+            clusterDTO = mapper.readValue(document.asJsonString(), ClusterDTO.class);
         } else {
-            clusterPOJO = getClusterPOJO(cluster);
+            clusterDTO = getClusterDTO(cluster);
         }
 
-        VolumePOJO volumePOJO = new VolumePOJO();
-        volumePOJO.setName(volume);
-        volumePOJO.setReplicating(replication);
-        //TODO check that volume already exists
-        clusterPOJO.getVolumes().add(volumePOJO);
-        String json = mapper.writeValueAsString(clusterPOJO);
+        if (!clusterDTO.getVolumes().isEmpty()) {
+            boolean contain = clusterDTO.getVolumes().contains(getVolumeDTO(volume, !replication));
+            if (contain) {
+                clusterDTO.getVolumes().remove(getVolumeDTO(volume, !replication));
+                clusterDTO.getVolumes().add(getVolumeDTO(volume, replication));
+            } else {
+                volumeDTO = getVolumeDTO(volume, replication);
+                clusterDTO.getVolumes().add(volumeDTO);
+            }
+
+        } else {
+            if (volume != null && replication != null) {
+                volumeDTO = getVolumeDTO(volume, replication);
+                clusterDTO.getVolumes().add(volumeDTO);
+            }
+        }
+
+        String json = mapper.writeValueAsString(clusterDTO);
         if (json != null) {
             put(json);
         }
     }
 
-    private ClusterPOJO getClusterPOJO(String cluster) {
-        ClusterPOJO clusterPOJO = new ClusterPOJO();
-        clusterPOJO.set_id(cluster);
-        clusterPOJO.setClusterName(cluster);
-        clusterPOJO.setVolumes(new ArrayList<>());
-        return clusterPOJO;
-    }
-
     public void put(String json) {
         Document doc = MapRDB.newDocument(json);
-        fileStateTable.insertOrReplace(doc);
-        fileStateTable.flush();
+        clusterTable.insertOrReplace(doc);
+        clusterTable.flush();
     }
-
-
 
     public List<Document> getAll() throws IOException {
 
-        DocumentStream documents = fileStateTable.find();
+        DocumentStream documents = clusterTable.find();
         List<Document> list = new LinkedList<>();
         if (documents != null) {
             for (Document doc : documents) {
@@ -98,51 +98,46 @@ public class ClusterDAO {
         return null;
     }
 
-    public String getClusters() throws IOException {
-        DocumentStream documents = fileStateTable.find();
-        ObjectMapper mapper = new ObjectMapper();
+    public Map getClusters() throws IOException {
+        DocumentStream documents = clusterTable.find();
         Set<String> clusters = new HashSet<>();
+        Map<String, Set<String>> map = new HashMap<>();
 
         if (documents != null) {
             for (Document document : documents) {
-                JsonNode node = mapper.readTree(document.toString());
-                clusters.add(node.get("cluster_name").toString());
+                clusters.add(document.getString("cluster_name"));
             }
         }
-        return mapper.createObjectNode()
-                .put("clusters", mapper.writeValueAsString(clusters)).toString();
+
+        map.put("clusters", clusters);
+        return map;
     }
 
-    public String getClusterInfo(String clusterName) {
-        Document document = fileStateTable.findById(clusterName);
-        if (document != null) {
-            return new ObjectMapper().createObjectNode()
-                    .put("name", document.getString("cluster_name"))
-                    .put("volumes", document.getValue("volumes").toString()).toString();
-        } else {
-            return new ObjectMapper().createObjectNode().toString();
-        }
+    public Document getClusterInfo(String clusterName) {
+        return clusterTable.findById(clusterName);
     }
 
-    public String getVolumes(String clusterName) throws IOException {
-        Document document = fileStateTable.findById(clusterName);
-        ObjectMapper mapper = new ObjectMapper();
+    public List getVolumes(String clusterName) throws IOException {
+        Document document = clusterTable.findById(clusterName);
         if (document != null) {
-            String json = document.getString("volumes");
-
-            Map<String, Boolean> map;
-            List<String> result = new ArrayList<>();
-            map = mapper.readValue(json, new TypeReference<Map<String, Boolean>>(){});
-
-            for (Map.Entry<String, Boolean> entry : map.entrySet()) {
-                if (entry.getValue()) {
-                    result.add(entry.getKey());
-                }
-            }
-
-            return mapper.createObjectNode().put("volumes", mapper.writeValueAsString(result)).toString();
+            return document.getList("volumes");
         }
-        return new ObjectMapper().createObjectNode().toString();
+        return null;
+    }
+
+    private VolumeDTO getVolumeDTO(String volume, Boolean replication) {
+        VolumeDTO volumeDTO = new VolumeDTO();
+        volumeDTO.setName(volume);
+        volumeDTO.setReplicating(replication);
+        return volumeDTO;
+    }
+
+    private ClusterDTO getClusterDTO(String cluster) {
+        ClusterDTO clusterDTO = new ClusterDTO();
+        clusterDTO.set_id(cluster);
+        clusterDTO.setCluster_name(cluster);
+        clusterDTO.setVolumes(new HashSet<>());
+        return clusterDTO;
     }
 }
 

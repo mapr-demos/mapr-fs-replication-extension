@@ -14,24 +14,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import static com.mapr.fs.config.Config.APPS_DIR;
+
 public class ConsumerDAO {
 
     private static final Logger log = Logger.getLogger(ConsumerDAO.class);
 
-    public Table getFileStateTable() {
-        return fileStateTable;
+    public Table getConsumerTable() {
+        return consumerTable;
     }
 
-    private Table fileStateTable;
+    private Table consumerTable;
 
-    private static final String APPS_DIR = "/apps/fs/db/consumer/";
-    private static final String FILE_STATE_TABLE = APPS_DIR + "state";
+    private static final String CONSUMER_TABLE = APPS_DIR + "consumer/state";
 
     public ConsumerDAO() {
-        this.fileStateTable = this.getTable(FILE_STATE_TABLE);
+        this.consumerTable = this.getTable(CONSUMER_TABLE);
     }
 
     private static final Object lock = new Object();
+
     private Table getTable(String tableName) {
         Table table;
         log.info("Check DB");
@@ -50,13 +52,13 @@ public class ConsumerDAO {
 
         if (json != null) {
             Document document = MapRDB.newDocument(json);
-            fileStateTable.insertOrReplace(document);
-            fileStateTable.flush();
+            consumerTable.insertOrReplace(document);
+            consumerTable.flush();
         }
     }
 
     public Document get(Path path) throws IOException {
-        Document document = fileStateTable.findById(path.toString());
+        Document document = consumerTable.findById(path.toString());
         if (document != null) {
             return document;
         }
@@ -65,7 +67,7 @@ public class ConsumerDAO {
 
     public Boolean remove(Path path) throws IOException {
 
-        Document document = fileStateTable.findById(path.toString());
+        Document document = consumerTable.findById(path.toString());
 
         if (document != null) {
 
@@ -74,7 +76,7 @@ public class ConsumerDAO {
             ((ObjectNode) node).put("removed", true);
 
             document = MapRDB.newDocument(node.toString());
-            fileStateTable.insertOrReplace(document);
+            consumerTable.insertOrReplace(document);
 
             return true;
         }

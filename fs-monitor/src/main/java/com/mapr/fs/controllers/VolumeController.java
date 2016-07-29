@@ -24,18 +24,39 @@ public class VolumeController {
         return ResponseEntity.ok(new ClusterDAO().getVolumes(name));
     }
 
-    @RequestMapping(value = "volume/{volume_name}", method = RequestMethod.POST,
+    @RequestMapping(value = "/volumes/status", method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity addVolume(
-            @PathVariable String volume_name,
-            @RequestParam("cluster_name") String clust_name) throws IOException {
+    public ResponseEntity changeStatus(
+            @RequestParam("volume_name") String volume_name,
+            @RequestParam("cluster_name") String cluster_name,
+            @RequestParam("replication") Boolean status) throws IOException {
 
         if (volume_name == null) throw new IllegalArgumentException("volume_name == null");
-        if (clust_name == null) throw new IllegalArgumentException("cluster_name == null");
+        if (cluster_name == null) throw new IllegalArgumentException("cluster_name == null");
+        if (status == null) throw new IllegalArgumentException("status == null");
 
-        new ClusterDAO().put(clust_name, volume_name, true);
+        new ClusterDAO().put(cluster_name, volume_name, status);
+        log.info(cluster_name);
+        log.info(volume_name);
+        log.info(status);
+        return ResponseEntity.ok().build();
+    }
 
-        return ResponseEntity.status(200).build();
+
+
+    @CrossOrigin(origins = "http://localhost:3000")
+    @RequestMapping(value = "/volumes", method = RequestMethod.POST,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity addVolume(
+            @RequestParam("volume_name") String volume_name,
+            @RequestParam("cluster_name") String cluster_name) throws IOException {
+
+        if (volume_name == null) throw new IllegalArgumentException("volume_name == null");
+        if (cluster_name == null) throw new IllegalArgumentException("cluster_name == null");
+
+        new ClusterDAO().put(cluster_name, volume_name, true);
+
+        return ResponseEntity.ok().build();
     }
 
 }

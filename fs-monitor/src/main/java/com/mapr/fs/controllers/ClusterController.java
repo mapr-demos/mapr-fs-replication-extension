@@ -17,17 +17,23 @@ import java.util.Map;
 @ResponseBody
 public class ClusterController {
 
-    private static final Logger log = Logger.getLogger(ClusterController.class);
-
-//    @CrossOrigin(origins = "http://localhost:3000")
     @RequestMapping(value = "/clusters", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody
-    Map<String, List<Document>> getClusters() throws IOException {
+    public ResponseEntity getClusters() throws IOException {
         Map<String, List<Document>> result = new HashMap<>();
         result.put("clusters", new ClusterDAO().getAll());
-        return result;
+        return ResponseEntity.ok(result);
     }
+
+    @RequestMapping(value = "/clusters", method = RequestMethod.POST,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity addClusters(@RequestParam("cluster_name") String name) throws IOException {
+        new ClusterDAO().put(name, null, null);
+
+        return ResponseEntity.ok().build();
+    }
+
+    private static final Logger log = Logger.getLogger(ClusterController.class);
 
     @RequestMapping(value = "/cluster/{cluster_name}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getClusterInfo(
@@ -36,5 +42,4 @@ public class ClusterController {
 
         return ResponseEntity.ok(new ClusterDAO().getClusterInfo(name));
     }
-
 }

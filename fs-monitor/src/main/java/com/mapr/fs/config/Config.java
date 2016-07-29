@@ -9,6 +9,7 @@ public class Config {
     public static final String CONFIG_PATHS[] = {"/tmp/config.conf", "config.conf"};
     public static final String KAFKA_STREAM = "stream";
     public static final String MONITOR_TOPIC = "change_%s";
+    public static final String APPS_DIR = "/apps/fs/db/";
 
     private Properties properties = new Properties();
 

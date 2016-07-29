@@ -94,5 +94,6 @@ public class Consumer {
                     new Gateway(pair.getKey(), pair.getValue()).processEvents());
 
         }
+        new ClusterDAO().put("cluster23443123", null, null);
     }
 }

@@ -75,8 +75,9 @@ public class FileState {
     /**
      * Find the 8k blocks of other that need to change to make the file contents the same. Assumes that
      * other is no longer than this.
-     * @param other    The FileState corresponding to the other file
-     * @return         A list of offsets for the 8k blocks that need to be copied to make the files identical.
+     *
+     * @param other The FileState corresponding to the other file
+     * @return A list of offsets for the 8k blocks that need to be copied to make the files identical.
      */
     public List<Long> changedBlockOffsets(FileState other) {
         long offset = 0;
@@ -101,7 +102,7 @@ public class FileState {
         return r;
     }
 
-    public String toJSON(){
+    public String toJSON() {
         return new ObjectMapper().createObjectNode()
                 .put("_id", path.toString())
                 .put("path", path.toString())
