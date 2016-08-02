@@ -1,7 +1,8 @@
 package com.mapr.fs.application;
 
 import com.mapr.fs.Config;
-//import com.mapr.fs.dao.ClusterDAO;
+import com.mapr.fs.dao.ClusterDAO;
+import com.mapr.fs.dao.dto.VolumeDTO;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -10,12 +11,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.*;
 
 
 public class Consumer {
@@ -28,9 +27,11 @@ public class Consumer {
         private final String volumeName;
         private final String path;
         private final EventFactory factory;
+        private Set volumes;
 
-        public Gateway(String volumeName, String path) {
+        public Gateway(String volumeName, String path, Set volumes) {
             this.volumeName = volumeName;
+            this.volumes = volumes;
             this.topic = Config.getMonitorTopic(volumeName);
             this.path = path;
             factory = new EventFactory();
@@ -48,6 +49,9 @@ public class Consumer {
                 log.info("Subscribing to the topic " + config.getTopicName(topic));
                 consumer.subscribe(Arrays.asList(config.getTopicName(topic)));
                 while (true) {
+                    if (!volumes.contains(volumeName)) {
+                        break;
+                    }
                     ConsumerRecords<String, String> records = consumer.poll(200);
                     for (ConsumerRecord<String, String> record : records) {
                         log.info(volumeName + ": " + record);
@@ -67,32 +71,42 @@ public class Consumer {
     }
 
     public static void main(String[] args) throws Exception {
-        Map<String, String> map = new HashMap<>();
-//        ClusterDAO dao = new ClusterDAO();
 
+        Set<String> volumes = new CopyOnWriteArraySet<>();
+        ClusterDAO dao = new ClusterDAO();
         BasicConfigurator.configure();
 
-        for (String val : args) {
-            String[] arr = val.split(":");
-            String volumeName = arr[0];
-            String path = arr[1];
+        Config conf = new Config("cluster.");
+        final String CLUSTER_NAME= conf.getProperties().getProperty("name");
 
-            if (!map.containsKey(volumeName)) {
-                map.put(volumeName, path);
-//                dao.put("cluster1", volumeName, true);
-            } else {
-                log.warn("Trying to add existed volume");
+        startConsuming(volumes, dao, CLUSTER_NAME);
+    }
+
+    private static void startConsuming(Set<String> volumes, ClusterDAO dao, String CLUSTER_NAME) throws IOException, InterruptedException {
+        ExecutorService service = Executors.newWorkStealingPool();
+
+        while (true) {
+            for (VolumeDTO dto : dao.getAllVolumes()) {
+                if (dto.isReplicating()) {
+                    if (!volumes.contains(dto.getName())) {
+                        checkDir(CLUSTER_NAME, dto);
+                        service.submit(() ->
+                            new Gateway(dto.getName(), CLUSTER_NAME + dto.getName(), volumes).processEvents());
+                        volumes.add(dto.getName());
+                    }
+                } else {
+                    if (volumes.contains(dto.getName())) {
+                        volumes.remove(dto.getName());
+                    }
+                }
             }
+            Thread.sleep(1000);
         }
+    }
 
-        ExecutorService service = Executors.newFixedThreadPool(map.size());
-
-        for (Map.Entry<String, String> pair : map.entrySet()) {
-
-            service.submit(() ->
-                    new Gateway(pair.getKey(), pair.getValue()).processEvents());
-
-        }
-//        new ClusterDAO().put("cluster23443123", null, null);
+    private static void checkDir(String CLUSTER_NAME, VolumeDTO dto) {
+        File file  = new File(CLUSTER_NAME + dto.getName());
+        if (!file.exists())
+            file.mkdir();
     }
 }

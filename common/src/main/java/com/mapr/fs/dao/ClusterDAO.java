@@ -11,6 +11,7 @@ import org.ojai.DocumentStream;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.mapr.fs.Config.APPS_DIR;
 
@@ -57,18 +58,18 @@ public class ClusterDAO {
         }
 
         if (!clusterDTO.getVolumes().isEmpty()) {
-            boolean contain = clusterDTO.getVolumes().contains(getVolumeDTO(volume, !replication));
+            boolean contain = clusterDTO.getVolumes().contains(getVolumeDTO(cluster, volume, !replication));
             if (contain) {
-                clusterDTO.getVolumes().remove(getVolumeDTO(volume, !replication));
-                clusterDTO.getVolumes().add(getVolumeDTO(volume, replication));
+                clusterDTO.getVolumes().remove(getVolumeDTO(cluster, volume, !replication));
+                clusterDTO.getVolumes().add(getVolumeDTO(cluster, volume, replication));
             } else {
-                volumeDTO = getVolumeDTO(volume, replication);
+                volumeDTO = getVolumeDTO(cluster, volume, replication);
                 clusterDTO.getVolumes().add(volumeDTO);
             }
 
         } else {
             if (volume != null && replication != null) {
-                volumeDTO = getVolumeDTO(volume, replication);
+                volumeDTO = getVolumeDTO(cluster, volume, replication);
                 clusterDTO.getVolumes().add(volumeDTO);
             }
         }
@@ -77,6 +78,23 @@ public class ClusterDAO {
         if (json != null) {
             put(json);
         }
+    }
+
+    public List<VolumeDTO> getAllVolumes() throws IOException {
+        DocumentStream ds = clusterTable.find();
+        ObjectMapper mapper = new ObjectMapper();
+        LinkedList volumes = new LinkedList();
+
+        if (ds != null) {
+            for(Document doc : ds) {
+                ClusterDTO clusterDTO = mapper.readValue(doc.asJsonString(), ClusterDTO.class);
+                volumes.addAll(clusterDTO.getVolumes()
+                        .stream()
+                        .filter(o -> o != null)
+                        .collect(Collectors.toList()));
+            }
+        }
+        return volumes;
     }
 
     public void put(String json) {
@@ -125,8 +143,9 @@ public class ClusterDAO {
         return null;
     }
 
-    private VolumeDTO getVolumeDTO(String volume, Boolean replication) {
+    private VolumeDTO getVolumeDTO(String clusterName, String volume, Boolean replication) {
         VolumeDTO volumeDTO = new VolumeDTO();
+        volumeDTO.setCluster_name(clusterName);
         volumeDTO.setName(volume);
         volumeDTO.setReplicating(replication);
         return volumeDTO;
