@@ -77,9 +77,21 @@ public class Consumer {
         BasicConfigurator.configure();
 
         Config conf = new Config("cluster.");
-        final String CLUSTER_NAME= conf.getProperties().getProperty("name");
+        String replicationTargetFolder= conf.getProperties().getProperty("target_folder");
 
-        startConsuming(volumes, dao, CLUSTER_NAME);
+        if ( replicationTargetFolder == null || replicationTargetFolder.isEmpty()) {
+            log.error("Configuration should contain  the 'cluster.target_folder' proprety ");
+            System.exit(1);
+        }
+
+        // Adding a trailing slash if not present (since it used to save replicated files)
+        if(replicationTargetFolder.charAt(replicationTargetFolder.length()-1)!=File.separatorChar){
+            replicationTargetFolder += File.separator;
+        }
+
+        log.info("Replication files/events will be saved in "+ replicationTargetFolder);
+
+        startConsuming(volumes, dao, replicationTargetFolder);
     }
 
     private static void startConsuming(Set<String> volumes, ClusterDAO dao, String CLUSTER_NAME) throws IOException, InterruptedException {
