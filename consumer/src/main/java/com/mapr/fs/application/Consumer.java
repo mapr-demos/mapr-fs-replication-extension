@@ -80,30 +80,26 @@ public class Consumer {
         String replicationTargetFolder= conf.getProperties().getProperty("target_folder");
 
         if ( replicationTargetFolder == null || replicationTargetFolder.isEmpty()) {
-            log.error("Configuration should contain  the 'cluster.target_folder' proprety ");
-            System.exit(1);
+            log.error("Configuration should contain  the 'cluster.target_folder' property");
+            throw new RuntimeException("Configuration should contain  the 'cluster.target_folder' property");
         }
 
-        // Adding a trailing slash if not present (since it used to save replicated files)
-        if(replicationTargetFolder.charAt(replicationTargetFolder.length()-1)!=File.separatorChar){
-            replicationTargetFolder += File.separator;
-        }
 
         log.info("Replication files/events will be saved in "+ replicationTargetFolder);
 
         startConsuming(volumes, dao, replicationTargetFolder);
     }
 
-    private static void startConsuming(Set<String> volumes, ClusterDAO dao, String CLUSTER_NAME) throws IOException, InterruptedException {
+    private static void startConsuming(Set<String> volumes, ClusterDAO dao, String replicationTargetFolder) throws IOException, InterruptedException {
         ExecutorService service = Executors.newWorkStealingPool();
 
         while (true) {
             for (VolumeDTO dto : dao.getAllVolumes()) {
                 if (dto.isReplicating()) {
                     if (!volumes.contains(dto.getName())) {
-                        checkDir(CLUSTER_NAME, dto);
+                        String replicationFolderForVolume = checkDir(replicationTargetFolder, dto.getName());
                         service.submit(() ->
-                            new Gateway(dto.getName(), CLUSTER_NAME + dto.getName(), volumes).processEvents());
+                            new Gateway(dto.getName(), replicationFolderForVolume, volumes).processEvents());
                         volumes.add(dto.getName());
                     }
                 } else {
@@ -116,9 +112,18 @@ public class Consumer {
         }
     }
 
-    private static void checkDir(String CLUSTER_NAME, VolumeDTO dto) {
-        File file  = new File(CLUSTER_NAME + dto.getName());
-        if (!file.exists())
-            file.mkdir();
+  /**
+   * Create the target folder if it does not exist
+   * @param replicationTargetFolder parent folder for "all replication" events for this consumer instance
+   * @param topicName Topic name, should be the name of the source volume
+   */
+    protected static String checkDir(String replicationTargetFolder, String topicName) {
+        File file  = new File(replicationTargetFolder , topicName);
+        if (!file.exists()) {
+            file.mkdirs();
+            log.info(file +" created");
+        }
+
+        return file.getAbsolutePath();
     }
 }

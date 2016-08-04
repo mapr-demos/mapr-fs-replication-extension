@@ -70,9 +70,8 @@ public class Config {
             return properties;
         } catch (IOException e) {
             log.error("Configuration file not found at path "+ path);
-            System.err.println("Configuration file not found at path " + path);
+            throw new RuntimeException( "Configuration file not found at path "+ path );
         }
-        return null;
     }
 
     public String getTopicName(String topic) {
