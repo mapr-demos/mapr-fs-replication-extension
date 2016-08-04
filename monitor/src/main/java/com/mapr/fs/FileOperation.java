@@ -32,7 +32,12 @@ public class FileOperation {
     private WatchEvent<Path> create;
     private WatchEvent<Path> modify;
     private List<Long> changes;
+
+    // Parent Directory for the event
+    // - watchDir is used byt all the events
+    // - watchDirTarget is only used for rename, and contains the parent directory of the "create"s operation
     private Path watchDir;
+    private Path watchDirTarget;
 
     public FileOperation(@JsonProperty("time") double t,
                          @JsonProperty("root") String root,
@@ -85,22 +90,47 @@ public class FileOperation {
         }
     }
 
+  /**
+   * Delete operation : delete an file or directory.
+   * @param watchDir
+   * @param event
+   * @return
+   */
     public static FileOperation delete(Path watchDir, WatchEvent<Path> event) {
         return new FileOperation(watchDir, event, null, null, null);
     }
 
+  /**
+   * Create a file or directory
+   * @param watchDir
+   * @param event
+   * @return
+   */
     public static FileOperation create(Path watchDir, WatchEvent<Path> event) {
         return new FileOperation(watchDir, null, event, null, null);
     }
 
+  /**
+   * Modify a file, only the updated bits are captured
+   * @param watchDir
+   * @param event
+   * @param longs
+   * @return
+   */
     public static FileOperation modify(Path watchDir, WatchEvent<Path> event, List<Long> longs) {
         return new FileOperation(watchDir, null, null, event, longs);
     }
 
-    public void addCreate(WatchEvent<Path> event) {
+  /**
+   * Adding the Create following a Delete in case of rename or move
+   * @param watchDirAfterRename new location of the file/directory
+   * @param event
+   */
+    public void addCreate(Path watchDirAfterRename, WatchEvent<Path> event) {
         if (delete == null || modify != null || create != null) {
             throw new IllegalArgumentException("Can only add creation to delete event");
         }
+        watchDirTarget = watchDirAfterRename;
         create = event;
     }
 
@@ -122,7 +152,9 @@ public class FileOperation {
 
     @JsonIgnore
     public Path getCreatePath() {
-        if (create != null) {
+        if ( delete != null && create != null ) {
+            return watchDirTarget.resolve(create.context());
+        } else if (create != null && delete ==null) {
             return watchDir.resolve(create.context());
         } else {
             return null;
@@ -205,7 +237,7 @@ public class FileOperation {
 
         if (delete != null && create != null) {
             assert modify == null;
-            return String.format("Rename in %s from %s to %s", watchDir, delete.context(), create.context());
+            return String.format("Rename from %s/%s to %s/%s", watchDir,  delete.context(), watchDirTarget,  create.context());
         } else if (delete != null) {
             assert modify == null;
             return String.format("Delete in %s of %s", watchDir, delete.context());

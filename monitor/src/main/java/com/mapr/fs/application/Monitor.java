@@ -211,7 +211,8 @@ public class Monitor {
         FileOperation op = changeMap.get(k);
         if (op != null) {
             // this is the second part of the rename
-            op.addCreate(event);
+            // we are adding the new directory and file name to the operation
+            op.addCreate(watchDir,event);
             inodes.remove(op.getDeletePath());
             FileState fs = monitorDao.remove(op.getDeletePath());
             changeMap.remove(k);
