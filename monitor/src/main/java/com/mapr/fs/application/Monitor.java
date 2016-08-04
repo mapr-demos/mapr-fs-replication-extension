@@ -215,7 +215,9 @@ public class Monitor {
             inodes.remove(op.getDeletePath());
             FileState fs = monitorDao.remove(op.getDeletePath());
             changeMap.remove(k);
-            monitorDao.put(fs.toJSON());
+            if (fs != null) {
+                monitorDao.put(fs.toJSON());
+            }
             // TODO should we be buffering the create operation in changeBuffer?
         } else {
             // this is a stand-alone creation
