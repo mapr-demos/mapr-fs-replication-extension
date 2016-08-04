@@ -1,11 +1,17 @@
 package com.mapr.fs;
 
+import org.apache.log4j.Logger;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 public class Config {
+
+    private static final Logger log = Logger.getLogger(Config.class);
+
+
     public static final String CONFIG_PATHS[] = {"/tmp/config.conf", "config.conf"};
     public static final String KAFKA_STREAM = "stream";
     public static final String MONITOR_TOPIC = "change_%s";
@@ -17,7 +23,8 @@ public class Config {
         Properties configProps = loadConfig(path);
 
         if (properties == null) {
-            throw new RuntimeException("Config file not found");
+            log.error("Configuration file not found");
+            throw new RuntimeException("Configuration file not found");
         }
 
         fillPropertiesWithPrefixes(configProps, prefixes);
@@ -27,7 +34,8 @@ public class Config {
         Properties configProps = loadConfig();
 
         if (properties == null) {
-            throw new RuntimeException("Config file not found");
+            log.error("Configuration file not found");
+            throw new RuntimeException("Configuration file not found");
         }
 
         fillPropertiesWithPrefixes(configProps, prefixes);
@@ -58,12 +66,12 @@ public class Config {
         try (InputStream props = new FileInputStream(path)) {
             Properties properties = new Properties();
             properties.load(props);
-            System.err.println("Config found at path " + path);
+            log.info("Configuration file found at path " + path);
             return properties;
         } catch (IOException e) {
-            System.err.println("Config not found at path " + path);
+            log.error("Configuration file not found at path "+ path);
+            throw new RuntimeException( "Configuration file not found at path "+ path );
         }
-        return null;
     }
 
     public String getTopicName(String topic) {
