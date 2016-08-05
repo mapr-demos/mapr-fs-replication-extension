@@ -5,7 +5,6 @@ import org.apache.log4j.Logger;
 import org.ojai.Document;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -13,8 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Controller
-@ResponseBody
+@RestController
 public class ClusterController {
 
     @RequestMapping(value = "/clusters", method = RequestMethod.GET,

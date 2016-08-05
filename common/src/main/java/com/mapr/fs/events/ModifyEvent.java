@@ -51,4 +51,14 @@ public class ModifyEvent implements Event {
         chan.truncate(message.getFileSize());
         chan.close();
     }
+
+    @Override
+    public String getFileName() {
+        return message.getName();
+    }
+
+    @Override
+    public String getFileStatus() {
+        return message.getClass().getSimpleName();
+    }
 }

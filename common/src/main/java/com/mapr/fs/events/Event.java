@@ -4,4 +4,6 @@ import java.io.IOException;
 
 public interface Event {
     void execute(String volumePath) throws IOException;
+    String getFileName();
+    String getFileStatus();
 }

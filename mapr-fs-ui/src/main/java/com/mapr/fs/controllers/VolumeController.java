@@ -4,13 +4,11 @@ import com.mapr.fs.dao.ClusterDAO;
 import org.apache.log4j.Logger;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-@Controller
-@ResponseBody
+@RestController
 public class VolumeController {
     private static final Logger log = Logger.getLogger(VolumeController.class);
 

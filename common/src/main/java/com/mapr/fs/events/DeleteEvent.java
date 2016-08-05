@@ -33,4 +33,14 @@ public class DeleteEvent implements Event {
         log.info(dao.get(Paths.get(filePath)));
         log.info("File/directory deleted: " + filePath);
     }
+
+    @Override
+    public String getFileName() {
+        return message.getName();
+    }
+
+    @Override
+    public String getFileStatus() {
+        return message.getClass().getSimpleName();
+    }
 }

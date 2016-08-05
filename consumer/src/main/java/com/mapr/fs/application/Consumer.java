@@ -2,6 +2,8 @@ package com.mapr.fs.application;
 
 import com.mapr.fs.Config;
 import com.mapr.fs.dao.ClusterDAO;
+import com.mapr.fs.dao.VolumeStatusDao;
+import com.mapr.fs.dao.dto.FileStatusDto;
 import com.mapr.fs.dao.dto.VolumeDTO;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
@@ -16,7 +18,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-
 public class Consumer {
 
     private static final Logger log = Logger.getLogger(Consumer.class);
@@ -28,6 +29,8 @@ public class Consumer {
         private final String path;
         private final EventFactory factory;
         private Set volumes;
+
+        private VolumeStatusDao volumeStatusDao = new VolumeStatusDao();
 
         public Gateway(String volumeName, String path, Set volumes) {
             this.volumeName = volumeName;
@@ -56,6 +59,7 @@ public class Consumer {
                     for (ConsumerRecord<String, String> record : records) {
                         log.info(volumeName + ": " + record);
                         Event event = factory.parseEvent(record.value());
+                        volumeStatusDao.putFileStatusByVolumeName(volumeName, createFileStatusDTO(event.getFileName(), event.getFileStatus()));
                         event.execute(path);
                     }
                     consumer.commitSync();
@@ -68,11 +72,18 @@ public class Consumer {
                 }
             }
         }
+
+        private FileStatusDto createFileStatusDTO(String fileName, String fileStatus) {
+            FileStatusDto dto = new FileStatusDto();
+            dto.setFilename(fileName);
+            dto.setLastEvent(fileStatus);
+            return dto;
+        }
     }
 
     public static void main(String[] args) throws Exception {
 
-        Set<String> volumes = new CopyOnWriteArraySet<>();
+        Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
         ClusterDAO dao = new ClusterDAO();
         BasicConfigurator.configure();
 
@@ -91,7 +102,7 @@ public class Consumer {
     }
 
     private static void startConsuming(Set<String> volumes, ClusterDAO dao, String replicationTargetFolder) throws IOException, InterruptedException {
-        ExecutorService service = Executors.newWorkStealingPool();
+        ExecutorService service = Executors.newFixedThreadPool(50);
 
         while (true) {
             for (VolumeDTO dto : dao.getAllVolumes()) {

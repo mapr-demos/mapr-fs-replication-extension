@@ -39,4 +39,14 @@ public class RenameToEvent implements Event {
             log.error("Rename failed: " + oldFilePath + " -> " + newFilePath);
         }
     }
+
+    @Override
+    public String getFileName() {
+        return message.getOldName();
+    }
+
+    @Override
+    public String getFileStatus() {
+        return message.getClass().getSimpleName();
+    }
 }

@@ -43,4 +43,14 @@ public class CreateEvent implements Event {
         dao.put(path);
         log.info(dao.get(path).toString());
     }
+
+    @Override
+    public String getFileName() {
+        return message.getName();
+    }
+
+    @Override
+    public String getFileStatus() {
+        return message.getClass().getSimpleName();
+    }
 }

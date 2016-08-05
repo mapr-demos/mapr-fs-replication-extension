@@ -16,4 +16,14 @@ public class RenameFromEvent implements Event {
     public void execute(String volumePath) throws IOException {
 
     }
+
+    @Override
+    public String getFileName() {
+        return message.getNewName();
+    }
+
+    @Override
+    public String getFileStatus() {
+        return message.getClass().getSimpleName();
+    }
 }
