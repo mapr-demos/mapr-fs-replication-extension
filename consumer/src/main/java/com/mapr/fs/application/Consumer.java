@@ -102,7 +102,7 @@ public class Consumer {
     }
 
     private static void startConsuming(Set<String> volumes, ClusterDAO dao, String replicationTargetFolder) throws IOException, InterruptedException {
-        ExecutorService service = Executors.newFixedThreadPool(50);
+        ExecutorService service = Executors.newCachedThreadPool();
 
         while (true) {
             for (VolumeDTO dto : dao.getAllVolumes()) {

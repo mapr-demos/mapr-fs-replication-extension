@@ -9,14 +9,18 @@ import com.mapr.fs.dao.dto.VolumeStatusDto;
 import lombok.extern.slf4j.Slf4j;
 import org.ojai.Document;
 import org.ojai.DocumentStream;
+import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import static com.mapr.fs.Config.APPS_DIR;
 
 @Slf4j
+@Repository
 public class VolumeStatusDao {
 
     private static String tableName = APPS_DIR + "volumeStatuses";
@@ -73,12 +77,31 @@ public class VolumeStatusDao {
     }
     public boolean putFileStatusByVolumeName(String volumeName, FileStatusDto fileStatusDto) throws IOException {
 
+        ObjectMapper mapper = new ObjectMapper();
         VolumeStatusDto volumeStatusDto = getVolumeFileStatusesByVolumeName(volumeName);
         if (volumeStatusDto != null){
-            volumeStatusDto.getFiles().add(fileStatusDto);
+            if(!volumeStatusDto.getFiles().add(fileStatusDto)){
+                volumeStatusDto.getFiles().remove(fileStatusDto);
+                volumeStatusDto.getFiles().add(fileStatusDto);
+            }
+            String doc = mapper.writeValueAsString(volumeStatusDto);
+            volumeStatusTable.insertOrReplace(MapRDB.newDocument(doc));
             return true;
         }
-        return false;
+        else {
+            Set<FileStatusDto> dtoSet = new HashSet<>();
+            dtoSet.add(fileStatusDto);
+            VolumeStatusDto dto = createVolumeStatusDTO(volumeName, dtoSet);
+            String doc = mapper.writeValueAsString(dto);
+            volumeStatusTable.insert(MapRDB.newDocument(doc));
+            return true;
+        }
     }
 
+    private VolumeStatusDto createVolumeStatusDTO(String volumeName, Set dtoSet) {
+        VolumeStatusDto dto = new VolumeStatusDto();
+        dto.setVolumeName(volumeName);
+        dto.setFiles(dtoSet);
+        return dto;
+    }
 }

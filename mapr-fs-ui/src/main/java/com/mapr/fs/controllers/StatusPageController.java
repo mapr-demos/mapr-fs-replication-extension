@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -20,20 +21,24 @@ public class StatusPageController {
 
     private VolumeStatusDao dao = new VolumeStatusDao();
 
-    @RequestMapping(value = "/volumes/{volumeName}", method = RequestMethod.GET,
+    @RequestMapping(value = "/volumes/status/{volumeName}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getVolumeStatusByName(@PathVariable String volumeName) throws IOException {
 
         VolumeStatusDto dto = dao.getVolumeFileStatusesByVolumeName(volumeName);
+        dto.setFiles(dto.getFiles().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet()));
         return ResponseEntity.ok(dto);
     }
 
-    @RequestMapping(value = "/volumes/{volumeName}", method = RequestMethod.GET,
+    @RequestMapping(value = "/volumes/status", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getAllVolumes(@PathVariable String volumeName) throws IOException {
+    public ResponseEntity getAllVolumes() throws IOException {
 
         List<VolumeStatusDto> dtos = dao.getAllVolumeFileStatuses();
         List<String> volumeNames = dtos.stream().map(VolumeStatusDto::getVolumeName).collect(Collectors.toList());
+
         return ResponseEntity.ok(volumeNames);
     }
 
