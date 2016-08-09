@@ -1,6 +1,7 @@
 package com.mapr.fs.application;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mapr.fs.Config;
 import com.mapr.fs.FileOperation;
@@ -27,6 +28,7 @@ import static java.nio.file.StandardWatchEventKinds.*;
 public class Monitor {
 
     private static final Logger log = Logger.getLogger(Monitor.class);
+    private final int MAX_MODIFY_SIZE = 5;
 
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
@@ -212,7 +214,7 @@ public class Monitor {
         if (op != null) {
             // this is the second part of the rename
             // we are adding the new directory and file name to the operation
-            op.addCreate(watchDir,event);
+            op.addCreate(watchDir, event);
             inodes.remove(op.getDeletePath());
             FileState fs = monitorDao.remove(op.getDeletePath());
             changeMap.remove(k);
@@ -291,9 +293,23 @@ public class Monitor {
     }
 
     private void emitModify(JsonProducer producer, Path name, Long size, List<Long> fileState, List<String> changes) throws JsonProcessingException {
-        producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
-                new Modify(root.relativize(name), size, fileState, changes));
-        log.info("send to stream -> MODIFY");
+        List<Long> fileStateResult = new LinkedList<>();
+        List<String> changesResult = new LinkedList<>();
+
+        Iterator<List<Long>> fileStateIterator = Lists.partition(fileState, MAX_MODIFY_SIZE).iterator();
+        Iterator<List<String>> changesIterator = Lists.partition(changes, MAX_MODIFY_SIZE).iterator();
+
+        for (; fileStateIterator.hasNext() && changesIterator.hasNext(); ) {
+            fileStateResult.addAll(fileStateIterator.next());
+            changesResult.addAll(changesIterator.next());
+
+            producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
+                    new Modify(root.relativize(name), size, fileStateResult, changesResult));
+
+            fileStateResult.clear();
+            changesResult.clear();
+            log.info("send to stream -> MODIFY");
+        }
     }
 
     private void emitCreate(JsonProducer producer, Path name) throws JsonProcessingException {
