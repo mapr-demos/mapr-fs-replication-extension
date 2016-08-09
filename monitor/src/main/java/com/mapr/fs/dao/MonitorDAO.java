@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
 import com.mapr.fs.FileState;
-import org.apache.log4j.Logger;
 import org.ojai.Document;
 
 import java.io.IOException;
@@ -12,38 +11,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static com.mapr.fs.Config.APPS_DIR;
-
-public class MonitorDAO {
-
-    private static final Logger log = Logger.getLogger(MonitorDAO.class);
-
-    public Table getMonitorTable() {
-        return monitorTable;
-    }
+/**
+ * The Monitor DAO is used to capture and store all event for the FS Monitor
+ */
+public class MonitorDAO extends AbstractDAO {
 
     private Table monitorTable;
 
-    private static final String MONITOR_TABLE = APPS_DIR + "monitor/state";
+    private static final String TYPE = "monitor";
+    private static final String SPL_TABLE_NAME = "state";
 
-    public MonitorDAO() {
-        this.monitorTable = this.getTable(MONITOR_TABLE);
+    public MonitorDAO() throws IOException {
+        String fullPath = this.getFullTableName(TYPE, SPL_TABLE_NAME);
+        monitorTable = this.getTable(fullPath);
     }
 
     private static final Object lock = new Object();
 
-    private Table getTable(String tableName) {
-        Table table;
-        log.info("Check DB");
-        synchronized (lock) {
-            if (!MapRDB.tableExists(tableName)) {
-                table = MapRDB.createTable(tableName);
-            } else {
-                table = MapRDB.getTable(tableName);
-            }
-        }
-        return table;
-    }
 
     public void put(String json) {
         Document document = MapRDB.newDocument(json);

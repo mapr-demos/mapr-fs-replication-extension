@@ -25,7 +25,7 @@ public class EventFactory {
         return jsonData.get("type").toString();
     }
 
-    private Event getEvent(Message message) {
+    private Event getEvent(Message message) throws IOException {
         if (message instanceof Create) {
             return new CreateEvent((Create) message);
         } else if (message instanceof Delete) {

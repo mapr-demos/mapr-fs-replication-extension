@@ -5,7 +5,6 @@ import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
 import com.mapr.fs.dao.dto.ClusterDTO;
 import com.mapr.fs.dao.dto.VolumeDTO;
-import org.apache.log4j.Logger;
 import org.ojai.Document;
 import org.ojai.DocumentStream;
 
@@ -13,37 +12,20 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.mapr.fs.Config.APPS_DIR;
 
-public class ClusterDAO {
-    private static final Logger log = Logger.getLogger(ClusterDAO.class);
-
-    public Table getClusterTable() {
-        return clusterTable;
-    }
+public class ClusterDAO extends AbstractDAO{
 
     private Table clusterTable;
 
-    private static final String CLUSTER_TABLE = APPS_DIR + "clusters/state";
+    private static final String TYPE = "clusters";
+    private static final String SPL_TABLE_NAME = "state";
 
-    public ClusterDAO() {
-        this.clusterTable = this.getTable(CLUSTER_TABLE);
+
+    public ClusterDAO() throws IOException {
+        String fullPath = this.getFullTableName(TYPE, SPL_TABLE_NAME);
+        clusterTable = this.getTable(fullPath);
     }
 
-    private static final Object lock = new Object();
-
-    private Table getTable(String tableName) {
-        Table table;
-        log.info("Check DB");
-        synchronized (lock) {
-            if (!MapRDB.tableExists(tableName)) {
-                table = MapRDB.createTable(tableName);
-            } else {
-                table = MapRDB.getTable(tableName);
-            }
-        }
-        return table;
-    }
 
     public void put(String cluster, String volume, Boolean replication) throws IOException {
         Document document = clusterTable.findById(cluster);
