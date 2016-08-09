@@ -6,7 +6,6 @@ import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
 import com.mapr.fs.dao.dto.FileStatusDto;
 import com.mapr.fs.dao.dto.VolumeStatusDto;
-import lombok.extern.slf4j.Slf4j;
 import org.ojai.Document;
 import org.ojai.DocumentStream;
 import org.springframework.stereotype.Repository;
@@ -17,27 +16,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import static com.mapr.fs.Config.APPS_DIR;
 
-@Slf4j
 @Repository
-public class VolumeStatusDao {
+public class VolumeStatusDao extends AbstractDAO {
 
-    private static String tableName = APPS_DIR + "volumeStatuses";
     private Table volumeStatusTable;
-    private static final Object lock = new Object();
+    private static final String TYPE = "clusters";
+    private static final String SPL_TABLE_NAME = "volumeStatus";
 
-    private Table getVolumeStatusTableTable() {
-        Table table;
-        log.info("Check DB");
-        synchronized (lock) {
-             table = (!MapRDB.tableExists(tableName)) ? MapRDB.createTable(tableName) : MapRDB.getTable(tableName);
-        }
-        return table;
-    }
-
-    public VolumeStatusDao(){
-        volumeStatusTable = getVolumeStatusTableTable();
+    public VolumeStatusDao() throws IOException {
+        String fullPath = this.getFullTableName(TYPE, SPL_TABLE_NAME);
+        volumeStatusTable = this.getTable(fullPath);
     }
 
     public VolumeStatusDto getVolumeFileStatusesByVolumeName(String volumeName) throws IOException {

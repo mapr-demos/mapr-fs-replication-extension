@@ -15,7 +15,7 @@ public class CreateEvent implements Event {
     private Create message;
     private ConsumerDAO dao;
 
-    public CreateEvent(Create message) {
+    public CreateEvent(Create message) throws IOException {
         this.message = message;
         this.dao = new ConsumerDAO();
     }

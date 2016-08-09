@@ -19,7 +19,11 @@ import java.util.stream.Collectors;
 public class StatusPageController {
 
 
-    private VolumeStatusDao dao = new VolumeStatusDao();
+    private VolumeStatusDao dao;
+
+    public StatusPageController() throws IOException {
+        dao = new VolumeStatusDao();
+    }
 
     @RequestMapping(value = "/volumes/status/{volumeName}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)

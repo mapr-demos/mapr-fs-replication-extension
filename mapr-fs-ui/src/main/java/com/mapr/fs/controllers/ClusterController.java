@@ -35,7 +35,7 @@ public class ClusterController {
 
     @RequestMapping(value = "/cluster/{cluster_name}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getClusterInfo(
-            @PathVariable("cluster_name") String name) {
+            @PathVariable("cluster_name") String name) throws IOException {
         if (name == null) throw new IllegalArgumentException("cluster_name == null");
 
         return ResponseEntity.ok(new ClusterDAO().getClusterInfo(name));

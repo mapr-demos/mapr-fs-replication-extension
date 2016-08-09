@@ -30,14 +30,15 @@ public class Consumer {
         private final EventFactory factory;
         private Set volumes;
 
-        private VolumeStatusDao volumeStatusDao = new VolumeStatusDao();
+        private VolumeStatusDao volumeStatusDao;
 
-        public Gateway(String volumeName, String path, Set volumes) {
+        public Gateway(String volumeName, String path, Set volumes) throws IOException {
             this.volumeName = volumeName;
             this.volumes = volumes;
             this.topic = Config.getMonitorTopic(volumeName);
             this.path = path;
-            factory = new EventFactory();
+            this.factory = new EventFactory();
+            this.volumeStatusDao = new VolumeStatusDao();
             log.info(volumeName + " gateway configured with path " + path);
         }
 
@@ -109,8 +110,13 @@ public class Consumer {
                 if (dto.isReplicating()) {
                     if (!volumes.contains(dto.getName())) {
                         String replicationFolderForVolume = checkDir(replicationTargetFolder, dto.getName());
-                        service.submit(() ->
-                            new Gateway(dto.getName(), replicationFolderForVolume, volumes).processEvents());
+                        service.submit(() -> {
+                            try {
+                                new Gateway(dto.getName(), replicationFolderForVolume, volumes).processEvents();
+                            } catch (IOException e) {
+                                log.error("Cannot create Gateway"+ e.getMessage());
+                            }
+                        });
                         volumes.add(dto.getName());
                     }
                 } else {

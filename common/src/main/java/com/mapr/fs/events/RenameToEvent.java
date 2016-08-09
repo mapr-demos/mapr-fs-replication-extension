@@ -14,7 +14,7 @@ public class RenameToEvent implements Event {
     private RenameTo message;
     private ConsumerDAO dao;
 
-    public RenameToEvent(RenameTo message) {
+    public RenameToEvent(RenameTo message) throws IOException {
         this.message = message;
         this.dao = new ConsumerDAO();
     }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
-import org.apache.log4j.Logger;
 import org.ojai.Document;
 
 import java.io.File;
@@ -14,38 +13,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static com.mapr.fs.Config.APPS_DIR;
-
-public class ConsumerDAO {
-
-    private static final Logger log = Logger.getLogger(ConsumerDAO.class);
-
-    public Table getConsumerTable() {
-        return consumerTable;
-    }
+public class ConsumerDAO extends AbstractDAO {
 
     private Table consumerTable;
+    private static final String TYPE = "consumer";
+    private static final String SPL_TABLE_NAME = "state";
 
-    private static final String CONSUMER_TABLE = APPS_DIR + "consumer/state";
-
-    public ConsumerDAO() {
-        this.consumerTable = this.getTable(CONSUMER_TABLE);
+    public ConsumerDAO() throws IOException {
+        String fullPath = this.getFullTableName(TYPE, SPL_TABLE_NAME);
+        consumerTable = this.getTable(fullPath);
     }
 
-    private static final Object lock = new Object();
-
-    private Table getTable(String tableName) {
-        Table table;
-        log.info("Check DB");
-        synchronized (lock) {
-            if (!MapRDB.tableExists(tableName)) {
-                table = MapRDB.createTable(tableName);
-            } else {
-                table = MapRDB.getTable(tableName);
-            }
-        }
-        return table;
-    }
 
     public void put(Path path) throws IOException {
         String json = getFileInfo(path);

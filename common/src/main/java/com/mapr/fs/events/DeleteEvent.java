@@ -13,7 +13,7 @@ public class DeleteEvent implements Event {
     private Delete message;
     private ConsumerDAO dao;
 
-    public DeleteEvent(Delete message) {
+    public DeleteEvent(Delete message) throws IOException {
         this.message = message;
         this.dao = new ConsumerDAO();
     }

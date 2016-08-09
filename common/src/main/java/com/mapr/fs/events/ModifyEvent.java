@@ -18,7 +18,7 @@ public class ModifyEvent implements Event {
     private Modify message;
     private ConsumerDAO dao;
 
-    public ModifyEvent(Modify message) {
+    public ModifyEvent(Modify message) throws IOException {
         this.message = message;
         this.dao = new ConsumerDAO();
     }
