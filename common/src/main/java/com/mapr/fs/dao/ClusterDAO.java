@@ -72,7 +72,7 @@ public class ClusterDAO extends AbstractDAO{
                 ClusterDTO clusterDTO = mapper.readValue(doc.asJsonString(), ClusterDTO.class);
                 volumes.addAll(clusterDTO.getVolumes()
                         .stream()
-                        .filter(o -> o != null)
+                        .filter(Objects::nonNull)
                         .collect(Collectors.toList()));
             }
         }

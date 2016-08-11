@@ -135,7 +135,6 @@ function reloadClusters() {
       });
     }
   });
-
 }
 
 

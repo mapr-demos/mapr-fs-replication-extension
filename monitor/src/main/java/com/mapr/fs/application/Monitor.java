@@ -8,6 +8,8 @@ import com.mapr.fs.FileOperation;
 import com.mapr.fs.FileState;
 import com.mapr.fs.JsonProducer;
 import com.mapr.fs.dao.MonitorDAO;
+import com.mapr.fs.dao.VolumeDAO;
+import com.mapr.fs.dao.dto.MonitorDTO;
 import com.mapr.fs.messages.*;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -37,6 +39,7 @@ public class Monitor {
     private Queue<FileOperation> changeBuffer;
     private Map<Object, FileOperation> changeMap;
     private final String volumeName;
+    private Set volumes;
 
     public enum OrderingRule {
         VOLUME {
@@ -77,13 +80,14 @@ public class Monitor {
     /**
      * Creates a WatchService and registers the given directory
      */
-    public Monitor(String volumeName, Path dir, OrderingRule order) throws IOException {
+    public Monitor(String volumeName, Path dir, OrderingRule order, Set volumes) throws IOException {
         this.volumeName = volumeName;
         log.info(volumeName);
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
         changeBuffer = new LinkedList<>();
         changeMap = new HashMap<>();
+        this.volumes = volumes;
 
         this.root = dir;
         this.order = order;
@@ -100,6 +104,9 @@ public class Monitor {
         startBufferProcessor();
 
         while (true) {
+            if (!volumes.contains(volumeName)) {
+                break;
+            }
             // wait for key to be signalled
             WatchKey key;
             try {
@@ -366,31 +373,42 @@ public class Monitor {
         return map;
     }
 
-    public static void main(String[] args) throws IOException {
-        if (args.length == 0) {
-            usage();
+    public static void main(String[] args) throws IOException, InterruptedException {
+        try {
+            Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
+            VolumeDAO dao = new VolumeDAO();
+
+            BasicConfigurator.configure();
+            startMonitoring(volumes, dao);
+        } catch (Exception ex) {
+            log.info(ex);
         }
+    }
 
-        BasicConfigurator.configure();
-        Map<String, String> map = parseArguments(args);
+    private static void startMonitoring(Set<String> volumes, VolumeDAO dao) throws IOException, InterruptedException {
+        ExecutorService service = Executors.newCachedThreadPool();
 
-        ExecutorService service = Executors.newFixedThreadPool(map.size());
-
-//         registerDirectory directory and process its events
-        for (Map.Entry<String, String> pair : map.entrySet()) {
-            try {
-                service.submit(() -> {
-                    Path dir = Paths.get(pair.getValue());
-                    try {
-                        new Monitor(pair.getKey(), dir, OrderingRule.VOLUME).processEvents();
-                    } catch (IOException e) {
-                        log.error(e);
-                        service.shutdownNow();
+        while (true) {
+            for (MonitorDTO dto : dao.getAllVolumes()) {
+                if (dto.isMonitoring()) {
+                    if (!volumes.contains(dto.getName())) {
+                        Path path = Paths.get(dto.get_id());
+                        service.submit(() -> {
+                            try {
+                                new Monitor(dto.getName(), path, OrderingRule.VOLUME, volumes).processEvents();
+                            } catch (IOException e) {
+                                log.error("Cannot create Gateway"+ e.getMessage());
+                            }
+                        });
+                        volumes.add(dto.getName());
                     }
-                });
-            } catch (Exception e) {
-                log.error(e);
+                } else {
+                    if (volumes.contains(dto.getName())) {
+                        volumes.remove(dto.getName());
+                    }
+                }
             }
+            Thread.sleep(1000);
         }
     }
 }

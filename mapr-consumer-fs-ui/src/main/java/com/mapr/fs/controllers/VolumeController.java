@@ -42,7 +42,6 @@ public class VolumeController {
 
 
 
-    @CrossOrigin(origins = "http://localhost:3000")
     @RequestMapping(value = "/volumes", method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity addVolume(
