@@ -11,6 +11,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -58,8 +59,17 @@ public class Consumer {
                     }
                     ConsumerRecords<String, String> records = consumer.poll(200);
                     for (ConsumerRecord<String, String> record : records) {
-                        log.info(volumeName + ": " + record);
                         Event event = factory.parseEvent(record.value());
+                        // log metada, to not log the full message ,( esp. value that can contains file content)
+                        log.info(String.format("volumeName : %s (topic = %s, partition = %s, offset = %s, timestamp = %s, producer = %s, key = %s)",
+                                volumeName,
+                                record.topic(),
+                                record.partition(),
+                                record.offset(),
+                                record.timestamp(),
+                                record.producer(),
+                                record.key())
+                        );
                         volumeStatusDao.putFileStatusByVolumeName(volumeName, createFileStatusDTO(event.getFileName(), event.getFileStatus()));
                         event.execute(path);
                     }
