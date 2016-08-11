@@ -1,6 +1,7 @@
 package com.mapr.fs.controllers;
 
 import com.mapr.fs.dao.VolumeStatusDao;
+import com.mapr.fs.dao.dto.FileStatusDto;
 import com.mapr.fs.dao.dto.VolumeStatusDto;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -32,7 +34,7 @@ public class StatusPageController {
         VolumeStatusDto dto = dao.getVolumeFileStatusesByVolumeName(volumeName);
         dto.setFiles(dto.getFiles().stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toCollection(LinkedHashSet<FileStatusDto>::new)));
         return ResponseEntity.ok(dto);
     }
 

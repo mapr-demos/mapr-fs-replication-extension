@@ -11,10 +11,7 @@ import org.ojai.DocumentStream;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 @Repository
@@ -78,7 +75,7 @@ public class VolumeStatusDao extends AbstractDAO {
             return true;
         }
         else {
-            Set<FileStatusDto> dtoSet = new HashSet<>();
+            LinkedHashSet<FileStatusDto> dtoSet = new LinkedHashSet<>();
             dtoSet.add(fileStatusDto);
             VolumeStatusDto dto = createVolumeStatusDTO(volumeName, dtoSet);
             String doc = mapper.writeValueAsString(dto);
@@ -87,7 +84,7 @@ public class VolumeStatusDao extends AbstractDAO {
         }
     }
 
-    private VolumeStatusDto createVolumeStatusDTO(String volumeName, Set dtoSet) {
+    private VolumeStatusDto createVolumeStatusDTO(String volumeName, LinkedHashSet<FileStatusDto> dtoSet) {
         VolumeStatusDto dto = new VolumeStatusDto();
         dto.setVolumeName(volumeName);
         dto.setFiles(dtoSet);

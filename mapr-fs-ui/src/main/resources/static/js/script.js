@@ -12,7 +12,7 @@ $(document).ready(function(){
 function render_table(table_data){
     $('#table_body').empty();
     var rows = '';
-    table_data.forEach(function(file){
+    table_data.reverse().forEach(function(file){
         rows += `<tr><td>${file.filename}</td><td>${file.lastEvent}</td></tr>`
     });
     $('#table_body' ).html(rows);
