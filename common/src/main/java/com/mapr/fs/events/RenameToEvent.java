@@ -42,7 +42,7 @@ public class RenameToEvent implements Event {
 
     @Override
     public String getFileName() {
-        return message.getOldName();
+        return message.getNewName();
     }
 
     @Override
