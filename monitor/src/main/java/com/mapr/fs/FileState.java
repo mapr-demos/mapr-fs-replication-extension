@@ -4,6 +4,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.htrace.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -19,6 +20,7 @@ import java.util.List;
  * Records the state of a file, including name, FID, permissions and content.
  */
 public class FileState {
+    private final Logger log = Logger.getLogger(this.getClass());
     public static final int BLOCK_SIZE = 8192;
     private long size;
     private List<Long> hashes = new ArrayList<>();
@@ -114,6 +116,7 @@ public class FileState {
     public List<String> changedBlockContentEncoded(List<Long> offsets) throws IOException {
         List<String> r = new ArrayList<>();
         RandomAccessFile input = new RandomAccessFile(this.path.toFile(), "r");
+        int chunckCounter = 0;
         for (long offset : offsets) {
             byte[] buffer = new byte[BLOCK_SIZE];
             input.seek(offset);
@@ -125,7 +128,7 @@ public class FileState {
                 buffer = Arrays.copyOf(buffer, size);
             }
             String encodedBlock = new String(Base64.encodeBase64(buffer));
-            System.out.println(encodedBlock);
+            log.debug("Sending chunk # "+ chunckCounter++ );
             r.add(encodedBlock);
         }
         return r;
