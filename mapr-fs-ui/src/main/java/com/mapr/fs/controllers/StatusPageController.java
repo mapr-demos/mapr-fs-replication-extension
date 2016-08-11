@@ -32,10 +32,15 @@ public class StatusPageController {
     public ResponseEntity getVolumeStatusByName(@PathVariable String volumeName) throws IOException {
 
         VolumeStatusDto dto = dao.getVolumeFileStatusesByVolumeName(volumeName);
-        dto.setFiles(dto.getFiles().stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet<FileStatusDto>::new)));
-        return ResponseEntity.ok(dto);
+        if (dto != null) {
+            LinkedHashSet<FileStatusDto> dtos = dto.getFiles().stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(LinkedHashSet<FileStatusDto>::new));
+            dto.setFiles(dtos);
+            return ResponseEntity.ok(dto);
+        }
+        else return ResponseEntity.ok(new VolumeStatusDto());
+
     }
 
     @RequestMapping(value = "/volumes/status", method = RequestMethod.GET,
