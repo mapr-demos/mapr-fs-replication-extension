@@ -19,7 +19,7 @@ public class RenameFromEvent implements Event {
 
     @Override
     public String getFileName() {
-        return message.getNewName();
+        return message.getOldName();
     }
 
     @Override
