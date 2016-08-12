@@ -48,6 +48,7 @@
         <module>consumer</module>
         <module>monitor</module>
         <module>mapr-fs-ui</module>
+        <module>maprfs-s3-replication</module>
     </modules>
 
     <dependencies>
