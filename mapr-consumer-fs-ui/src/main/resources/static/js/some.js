@@ -1,5 +1,5 @@
 
-var API_ENDPOINT = '/v1'
+var API_ENDPOINT = ''
 
 
 function addCluster(cluster){

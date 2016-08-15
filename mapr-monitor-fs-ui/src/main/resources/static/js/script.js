@@ -1,5 +1,5 @@
 var val = '';
-var API_ENDPOINT = 'http://centos7-sn:3000/v1/'
+var API_ENDPOINT = ''
 $.ajax({
   crossDomain: true
 });
