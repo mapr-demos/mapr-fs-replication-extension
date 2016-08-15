@@ -125,7 +125,6 @@ public class FileState {
                 buffer = Arrays.copyOf(buffer, size);
             }
             String encodedBlock = new String(Base64.encodeBase64(buffer));
-            System.out.println(encodedBlock);
             r.add(encodedBlock);
         }
         return r;
