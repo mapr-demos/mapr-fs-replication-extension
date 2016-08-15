@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -70,7 +71,7 @@ public class Consumer {
                                 record.producer(),
                                 record.key())
                         );
-                        volumeStatusDao.putFileStatusByVolumeName(volumeName, createFileStatusDTO(event.getFileName(), event.getFileStatus()));
+                        volumeStatusDao.putFileStatusByVolumeName(volumeName, new FileStatusDto(event.getFileName(), event.getFileStatus(), LocalDateTime.now()));
                         event.execute(path);
                     }
                     consumer.commitSync();
@@ -84,12 +85,6 @@ public class Consumer {
             }
         }
 
-        private FileStatusDto createFileStatusDTO(String fileName, String fileStatus) {
-            FileStatusDto dto = new FileStatusDto();
-            dto.setFilename(fileName);
-            dto.setLastEvent(fileStatus);
-            return dto;
-        }
     }
 
     public static void main(String[] args) throws Exception {

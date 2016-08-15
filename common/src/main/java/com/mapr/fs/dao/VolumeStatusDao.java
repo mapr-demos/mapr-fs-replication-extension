@@ -77,17 +77,10 @@ public class VolumeStatusDao extends AbstractDAO {
         else {
             LinkedHashSet<FileStatusDto> dtoSet = new LinkedHashSet<>();
             dtoSet.add(fileStatusDto);
-            VolumeStatusDto dto = createVolumeStatusDTO(volumeName, dtoSet);
+            VolumeStatusDto dto = new VolumeStatusDto(volumeName, dtoSet);
             String doc = mapper.writeValueAsString(dto);
             volumeStatusTable.insert(MapRDB.newDocument(doc));
             return true;
         }
-    }
-
-    private VolumeStatusDto createVolumeStatusDTO(String volumeName, LinkedHashSet<FileStatusDto> dtoSet) {
-        VolumeStatusDto dto = new VolumeStatusDto();
-        dto.setVolumeName(volumeName);
-        dto.setFiles(dtoSet);
-        return dto;
     }
 }
