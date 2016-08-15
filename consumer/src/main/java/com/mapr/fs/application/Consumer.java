@@ -15,8 +15,12 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Consumer {
 
@@ -89,15 +93,15 @@ public class Consumer {
         BasicConfigurator.configure();
 
         Config conf = new Config("cluster.");
-        String replicationTargetFolder= conf.getProperties().getProperty("target_folder");
+        String replicationTargetFolder = conf.getProperties().getProperty("target_folder");
 
-        if ( replicationTargetFolder == null || replicationTargetFolder.isEmpty()) {
+        if (replicationTargetFolder == null || replicationTargetFolder.isEmpty()) {
             log.error("Configuration should contain  the 'cluster.target_folder' property");
             throw new RuntimeException("Configuration should contain  the 'cluster.target_folder' property");
         }
 
 
-        log.info("Replication files/events will be saved in "+ replicationTargetFolder);
+        log.info("Replication files/events will be saved in " + replicationTargetFolder);
 
         startConsuming(volumes, dao, replicationTargetFolder);
     }
@@ -114,7 +118,7 @@ public class Consumer {
                             try {
                                 new Gateway(dto.getName(), replicationFolderForVolume, volumes).processEvents();
                             } catch (IOException e) {
-                                log.error("Cannot create Gateway"+ e.getMessage());
+                                log.error("Cannot create Gateway" + e.getMessage());
                             }
                         });
                         volumes.add(dto.getName());
@@ -129,18 +133,18 @@ public class Consumer {
         }
     }
 
-  /**
-   * Create the target folder if it does not exist
-   * @param replicationTargetFolder parent folder for "all replication" events for this consumer instance
-   * @param topicName Topic name, should be the name of the source volume
-   */
+    /**
+     * Create the target folder if it does not exist
+     *
+     * @param replicationTargetFolder parent folder for "all replication" events for this consumer instance
+     * @param topicName               Topic name, should be the name of the source volume
+     */
     protected static String checkDir(String replicationTargetFolder, String topicName) {
-        File file  = new File(replicationTargetFolder , topicName);
+        File file = new File(replicationTargetFolder, topicName);
         if (!file.exists()) {
             file.mkdirs();
-            log.info(file +" created");
+            log.info(file + " created");
         }
-
         return file.getAbsolutePath();
     }
 }

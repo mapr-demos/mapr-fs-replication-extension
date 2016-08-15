@@ -4,12 +4,13 @@ import com.mapr.fs.dao.VolumeDAO;
 import org.apache.log4j.Logger;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RestController
 public class VolumeController {
@@ -45,10 +46,10 @@ public class VolumeController {
 
 
     private static String checkDir(String topicPath) {
-        File file  = new File(topicPath);
+        File file = new File(topicPath);
         if (!file.exists()) {
             file.mkdirs();
-            log.info(file +" created");
+            log.info(file + " created");
         }
 
         return file.getAbsolutePath();

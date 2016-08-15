@@ -40,8 +40,6 @@ public class VolumeController {
         return ResponseEntity.ok().build();
     }
 
-
-
     @RequestMapping(value = "/volumes", method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity addVolume(
@@ -55,5 +53,4 @@ public class VolumeController {
 
         return ResponseEntity.ok().build();
     }
-
 }

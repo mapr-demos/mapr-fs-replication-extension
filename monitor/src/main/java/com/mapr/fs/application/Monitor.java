@@ -352,27 +352,6 @@ public class Monitor {
         monitorDao.put(FileState.getFileInfo(f).toJSON());
     }
 
-    static void usage() {
-        log.error("usage: [<volumeName1>:<path1>] [<volume2>:<path2>] ...");
-        System.exit(-1);
-    }
-
-    private static Map parseArguments(String[] args) throws IOException {
-        Map<String, String> map = new HashMap<>();
-
-        for (String val : args) {
-            String[] arr = val.split(":");
-
-            if (!map.containsKey(arr[0])) {
-                map.put(arr[0], arr[1]);
-            } else {
-                throw new IllegalArgumentException("Trying to add existed volume");
-            }
-        }
-
-        return map;
-    }
-
     public static void main(String[] args) throws IOException, InterruptedException {
         try {
             Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
@@ -397,7 +376,7 @@ public class Monitor {
                             try {
                                 new Monitor(dto.getName(), path, OrderingRule.VOLUME, volumes).processEvents();
                             } catch (IOException e) {
-                                log.error("Cannot create Gateway"+ e.getMessage());
+                                log.error("Cannot create Gateway" + e.getMessage());
                             }
                         });
                         volumes.add(dto.getName());

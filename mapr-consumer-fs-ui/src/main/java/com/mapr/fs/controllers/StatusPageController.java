@@ -38,8 +38,7 @@ public class StatusPageController {
                     .collect(Collectors.toCollection(LinkedHashSet<FileStatusDto>::new));
             dto.setFiles(dtos);
             return ResponseEntity.ok(dto);
-        }
-        else return ResponseEntity.ok(new VolumeStatusDto());
+        } else return ResponseEntity.ok(new VolumeStatusDto());
     }
 
     @RequestMapping(value = "/volumes/status", method = RequestMethod.GET,
