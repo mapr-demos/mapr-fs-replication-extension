@@ -71,7 +71,7 @@ public class Consumer {
                                 record.producer(),
                                 record.key())
                         );
-                        volumeStatusDao.putFileStatusByVolumeName(volumeName, new FileStatusDto(event.getFileName(), event.getFileStatus(), LocalDateTime.now()));
+                        volumeStatusDao.putFileStatusByVolumeName(volumeName, new FileStatusDto(event.getFileName(), event.getFileStatus(), LocalDateTime.now().toString()));
                         event.execute(path);
                     }
                     consumer.commitSync();
