@@ -93,7 +93,7 @@ public class Monitor {
     /**
      * Process all events for keys queued to the watcher
      */
-    void processEvents() throws IOException {
+    private void processEvents() throws IOException {
         changeBuffer = new LinkedList<>();
         changeMap = new HashMap<>();
 
@@ -345,12 +345,12 @@ public class Monitor {
         monitorDao.put(FileState.getFileInfo(f).toJSON());
     }
 
-    static void usage() {
+    private static void usage() {
         log.error("usage: [<volumeName1>:<path1>] [<volume2>:<path2>] ...");
         System.exit(-1);
     }
 
-    private static Map parseArguments(String[] args) throws IOException {
+    private static Map<String,String> parseArguments(String[] args) throws IOException {
         Map<String, String> map = new HashMap<>();
 
         for (String val : args) {

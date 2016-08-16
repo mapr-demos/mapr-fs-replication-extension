@@ -154,7 +154,7 @@ public class FileOperation {
     public Path getCreatePath() {
         if ( delete != null && create != null ) {
             return watchDirTarget.resolve(create.context());
-        } else if (create != null && delete ==null) {
+        } else if (create != null && delete == null) {
             return watchDir.resolve(create.context());
         } else {
             return null;

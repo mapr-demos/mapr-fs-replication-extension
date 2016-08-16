@@ -13,7 +13,7 @@ function render_table(table_data){
     $('#table_body').empty();
     var rows = '';
     table_data.reverse().forEach(function(file){
-        rows += `<tr><td>${file.filename}</td><td>${file.lastEvent}</td></tr>`
+        rows += `<tr><td>${file.dateTime}</td><td>${file.lastEvent}</td><td>${file.filename}</td></tr>`
     });
     $('#table_body' ).html(rows);
 }
@@ -31,18 +31,18 @@ function retrive_data() {
 }
 
 function retrive_volumes() {
-     $('.selectpicker').empty();
+    $('.selectpicker').empty();
     $.get( `volumes/status`, function( data ) {
 //        data = JSON.parse(data);
         data.forEach(function(option){
             $('.selectpicker')
-            .append($("<option></option>")
-                .attr("value",option)
-                .text(option));
+                .append($("<option></option>")
+                    .attr("value",option)
+                    .text(option));
         });
 
         $('.selectpicker').selectpicker('refresh');
-         $('.selectpicker').selectpicker('val', val);
+        $('.selectpicker').selectpicker('val', val);
 
     });
     setTimeout(retrive_volumes, 2*1000)

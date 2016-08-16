@@ -12,9 +12,9 @@ public class Config {
     private static final Logger log = Logger.getLogger(Config.class);
 
 
-    public static final String CONFIG_PATHS[] = {"/tmp/config.conf", "config.conf"};
-    public static final String KAFKA_STREAM = "stream";
-    public static final String MONITOR_TOPIC = "change_%s";
+    private static final String CONFIG_PATHS[] = {"/tmp/config.conf", "config.conf"};
+    private static final String KAFKA_STREAM = "stream";
+    private static final String MONITOR_TOPIC = "change_%s";
     public static final String APPS_DIR = new Config("cluster.").getProperties().getProperty("database");
 
     private Properties properties = new Properties();
