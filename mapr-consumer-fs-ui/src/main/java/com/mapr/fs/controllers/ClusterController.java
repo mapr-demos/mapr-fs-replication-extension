@@ -1,8 +1,8 @@
 package com.mapr.fs.controllers;
 
 import com.mapr.fs.dao.ClusterDAO;
+import com.mapr.fs.dao.dto.ClusterDTO;
 import org.apache.log4j.Logger;
-import org.ojai.Document;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class ClusterController {
     @RequestMapping(value = "/clusters", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getClusters() throws IOException {
-        Map<String, List<Document>> result = new HashMap<>();
+        Map<String, List<ClusterDTO>> result = new HashMap<>();
         result.put("clusters", new ClusterDAO().getAll());
         return ResponseEntity.ok(result);
     }

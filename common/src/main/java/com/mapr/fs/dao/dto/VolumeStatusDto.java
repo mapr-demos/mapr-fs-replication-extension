@@ -13,5 +13,4 @@ public class VolumeStatusDto {
     private String volumeName;
     private LinkedHashSet<FileStatusDto> files;
 
-
 }

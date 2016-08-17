@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-public class ClusterDAO extends AbstractDAO{
+public class ClusterDAO extends AbstractDAO {
 
     private Table clusterTable;
 
@@ -31,30 +31,14 @@ public class ClusterDAO extends AbstractDAO{
         Document document = clusterTable.findById(cluster);
         ObjectMapper mapper = new ObjectMapper();
         ClusterDTO clusterDTO;
-        VolumeDTO volumeDTO;
 
         if (document != null) {
             clusterDTO = mapper.readValue(document.asJsonString(), ClusterDTO.class);
         } else {
-            clusterDTO = getClusterDTO(cluster);
+            clusterDTO = new ClusterDTO(cluster, cluster, new HashSet<>());
         }
 
-        if (!clusterDTO.getVolumes().isEmpty()) {
-            boolean contain = clusterDTO.getVolumes().contains(getVolumeDTO(cluster, volume, !replication));
-            if (contain) {
-                clusterDTO.getVolumes().remove(getVolumeDTO(cluster, volume, !replication));
-                clusterDTO.getVolumes().add(getVolumeDTO(cluster, volume, replication));
-            } else {
-                volumeDTO = getVolumeDTO(cluster, volume, replication);
-                clusterDTO.getVolumes().add(volumeDTO);
-            }
-
-        } else {
-            if (volume != null && replication != null) {
-                volumeDTO = getVolumeDTO(cluster, volume, replication);
-                clusterDTO.getVolumes().add(volumeDTO);
-            }
-        }
+        updateVolumes(cluster, volume, replication, clusterDTO);
 
         String json = mapper.writeValueAsString(clusterDTO);
         if (json != null) {
@@ -62,13 +46,46 @@ public class ClusterDAO extends AbstractDAO{
         }
     }
 
+    public void put(String json) {
+        Document doc = MapRDB.newDocument(json);
+        clusterTable.insertOrReplace(doc);
+        clusterTable.flush();
+    }
+
+    private void updateVolumes(String cluster, String volume, Boolean replication, ClusterDTO clusterDTO) {
+        VolumeDTO volumeDTO;
+        if (!clusterDTO.getVolumes().isEmpty()) {
+            boolean contain = clusterDTO.getVolumes().contains(new VolumeDTO(cluster, volume, !replication));
+            if (contain) {
+                clusterDTO.getVolumes().remove(new VolumeDTO(cluster, volume, !replication));
+                clusterDTO.getVolumes().add(new VolumeDTO(cluster, volume, replication));
+            } else {
+                volumeDTO = new VolumeDTO(cluster, volume, replication);
+                clusterDTO.getVolumes().add(volumeDTO);
+            }
+
+        } else {
+            if (volume != null && replication != null) {
+                volumeDTO = new VolumeDTO(cluster, volume, replication);
+                clusterDTO.getVolumes().add(volumeDTO);
+            }
+        }
+        filterVolumes(clusterDTO);
+    }
+
+    private void filterVolumes(ClusterDTO clusterDTO) {
+        clusterDTO.setVolumes(clusterDTO.getVolumes().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(HashSet<VolumeDTO>::new)));
+    }
+
     public List<VolumeDTO> getAllVolumes() throws IOException {
         DocumentStream ds = clusterTable.find();
         ObjectMapper mapper = new ObjectMapper();
-        LinkedList volumes = new LinkedList();
+        LinkedList<VolumeDTO> volumes = new LinkedList();
 
         if (ds != null) {
-            for(Document doc : ds) {
+            for (Document doc : ds) {
                 ClusterDTO clusterDTO = mapper.readValue(doc.asJsonString(), ClusterDTO.class);
                 volumes.addAll(clusterDTO.getVolumes()
                         .stream()
@@ -79,19 +96,17 @@ public class ClusterDAO extends AbstractDAO{
         return volumes;
     }
 
-    public void put(String json) {
-        Document doc = MapRDB.newDocument(json);
-        clusterTable.insertOrReplace(doc);
-        clusterTable.flush();
-    }
-
-    public List<Document> getAll() throws IOException {
+    public List<ClusterDTO> getAll() throws IOException {
 
         DocumentStream documents = clusterTable.find();
-        List<Document> list = new LinkedList<>();
+        ObjectMapper mapper = new ObjectMapper();
+
+        List<ClusterDTO> list = new LinkedList<>();
         if (documents != null) {
             for (Document doc : documents) {
-                list.add(doc);
+                ClusterDTO clusterDTO = mapper.readValue(doc.asJsonString(), ClusterDTO.class);
+                filterVolumes(clusterDTO);
+                list.add(clusterDTO);
             }
             return list;
         }
@@ -123,22 +138,6 @@ public class ClusterDAO extends AbstractDAO{
             return document.getList("volumes");
         }
         return null;
-    }
-
-    private VolumeDTO getVolumeDTO(String clusterName, String volume, Boolean replication) {
-        VolumeDTO volumeDTO = new VolumeDTO();
-        volumeDTO.setCluster_name(clusterName);
-        volumeDTO.setName(volume);
-        volumeDTO.setReplicating(replication);
-        return volumeDTO;
-    }
-
-    private ClusterDTO getClusterDTO(String cluster) {
-        ClusterDTO clusterDTO = new ClusterDTO();
-        clusterDTO.set_id(cluster);
-        clusterDTO.setCluster_name(cluster);
-        clusterDTO.setVolumes(new HashSet<>());
-        return clusterDTO;
     }
 }
 
