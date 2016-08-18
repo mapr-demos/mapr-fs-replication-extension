@@ -221,7 +221,9 @@ public class Monitor {
             if (fs != null) {
                 monitorDao.put(fs.toJSON());
             }
-            // TODO should we be buffering the create operation in changeBuffer?
+            if (op.isOldCreate()) {
+                changeBuffer.add(FileOperation.create(watchDir, event));
+            }
         } else {
             // this is a stand-alone creation
             changeBuffer.add(FileOperation.create(watchDir, event));
@@ -350,7 +352,7 @@ public class Monitor {
         System.exit(-1);
     }
 
-    private static Map<String,String> parseArguments(String[] args) throws IOException {
+    private static Map<String, String> parseArguments(String[] args) throws IOException {
         Map<String, String> map = new HashMap<>();
 
         for (String val : args) {
