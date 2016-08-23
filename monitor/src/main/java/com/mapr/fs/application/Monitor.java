@@ -3,23 +3,51 @@ package com.mapr.fs.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
 import com.mapr.fs.Config;
 import com.mapr.fs.FileOperation;
 import com.mapr.fs.FileState;
 import com.mapr.fs.JsonProducer;
 import com.mapr.fs.dao.MonitorDAO;
-import com.mapr.fs.messages.*;
+
+import com.mapr.fs.messages.Create;
+import com.mapr.fs.messages.Delete;
+import com.mapr.fs.messages.RenameTo;
+import com.mapr.fs.messages.RenameFrom;
+import com.mapr.fs.messages.Modify;
+
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.*;
+
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchService;
+import java.nio.file.WatchKey;
+import java.nio.file.Files;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileSystems;
+import java.nio.file.WatchEvent;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.LinkOption;
+import java.nio.file.Paths;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Iterator;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static java.nio.file.StandardWatchEventKinds.*;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 
 /**
  * Watches a directory for changes and writes those changes as appropriate
@@ -29,6 +57,7 @@ public class Monitor {
 
     private static final Logger log = Logger.getLogger(Monitor.class);
     private final int MAX_MODIFY_SIZE = 5;
+    private final int MAX_OFFSETS_SIZE = 20_000;
 
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
@@ -82,7 +111,7 @@ public class Monitor {
         log.info(volumeName);
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
-        changeBuffer = new LinkedList<>();
+        changeBuffer = new ConcurrentLinkedQueue<>();
         changeMap = new HashMap<>();
 
         this.root = dir;
@@ -270,10 +299,11 @@ public class Monitor {
                 Path changed = op.getModifyPath();
                 FileState newState = FileState.getFileInfo(changed);
                 if (newState != null) {
-                    log.info(String.format("Op %s is %.3f s old\n", op, System.nanoTime() / 1e9 - op.start));
-                    emitModify(producer, changed, newState.getFileSize(), op.getModifiedOffsets(),
-                            newState.changedBlockContentEncoded(op.getModifiedOffsets()));
-                    monitorDao.put(newState.toJSON());
+                    for (List<Long> offsets : Lists.partition(op.getModifiedOffsets(), MAX_OFFSETS_SIZE)) {
+                        emitModify(producer, changed, newState.getFileSize(), offsets,
+                                newState.changedBlockContentEncoded(offsets));
+                        monitorDao.put(newState.toJSON());
+                    }
                 } else {
                     // if file was deleted before we saw the change,
                     // we just forget about it and any changes that might have happened

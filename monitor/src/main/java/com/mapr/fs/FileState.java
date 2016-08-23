@@ -128,7 +128,7 @@ public class FileState {
                 buffer = Arrays.copyOf(buffer, size);
             }
             String encodedBlock = new String(Base64.encodeBase64(buffer));
-            log.debug("Sending chunk # "+ chunckCounter++ );
+            log.debug("Sending chunk # " + chunckCounter++);
             r.add(encodedBlock);
         }
         return r;
