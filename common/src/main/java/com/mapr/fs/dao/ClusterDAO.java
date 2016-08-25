@@ -27,7 +27,7 @@ public class ClusterDAO extends AbstractDAO{
     }
 
 
-    public void put(String cluster, String volume, Boolean replication) throws IOException {
+    public void put(String cluster, String volume, String path, Boolean replication) throws IOException {
         Document document = clusterTable.findById(cluster);
         ObjectMapper mapper = new ObjectMapper();
         ClusterDTO clusterDTO;
@@ -40,18 +40,18 @@ public class ClusterDAO extends AbstractDAO{
         }
 
         if (!clusterDTO.getVolumes().isEmpty()) {
-            boolean contain = clusterDTO.getVolumes().contains(getVolumeDTO(cluster, volume, !replication));
+            boolean contain = clusterDTO.getVolumes().contains(getVolumeDTO(cluster, volume, path, !replication));
             if (contain) {
-                clusterDTO.getVolumes().remove(getVolumeDTO(cluster, volume, !replication));
-                clusterDTO.getVolumes().add(getVolumeDTO(cluster, volume, replication));
+                clusterDTO.getVolumes().remove(getVolumeDTO(cluster, volume, path, !replication));
+                clusterDTO.getVolumes().add(getVolumeDTO(cluster, volume, path, replication));
             } else {
-                volumeDTO = getVolumeDTO(cluster, volume, replication);
+                volumeDTO = getVolumeDTO(cluster, volume, path, replication);
                 clusterDTO.getVolumes().add(volumeDTO);
             }
 
         } else {
             if (volume != null && replication != null) {
-                volumeDTO = getVolumeDTO(cluster, volume, replication);
+                volumeDTO = getVolumeDTO(cluster, volume, path, replication);
                 clusterDTO.getVolumes().add(volumeDTO);
             }
         }
@@ -125,10 +125,11 @@ public class ClusterDAO extends AbstractDAO{
         return null;
     }
 
-    private VolumeDTO getVolumeDTO(String clusterName, String volume, Boolean replication) {
+    private VolumeDTO getVolumeDTO(String clusterName, String volume, String path, Boolean replication) {
         VolumeDTO volumeDTO = new VolumeDTO();
         volumeDTO.setCluster_name(clusterName);
         volumeDTO.setName(volume);
+        volumeDTO.setPath(path);
         volumeDTO.setReplicating(replication);
         return volumeDTO;
     }

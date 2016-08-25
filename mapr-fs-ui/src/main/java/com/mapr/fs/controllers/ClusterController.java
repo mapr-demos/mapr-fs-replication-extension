@@ -26,7 +26,7 @@ public class ClusterController {
     @RequestMapping(value = "/clusters", method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity addClusters(@RequestParam("cluster_name") String name) throws IOException {
-        new ClusterDAO().put(name, null, null);
+        new ClusterDAO().put(name, null, null, null);
 
         return ResponseEntity.ok().build();
     }

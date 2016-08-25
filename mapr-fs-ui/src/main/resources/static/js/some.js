@@ -22,6 +22,7 @@ function addCluster(cluster){
   <form id="cluster_${cluster_id}_form">
   <input type="hidden" name="cluster_name" value="${cluster.cluster_name}">
   <input type="text" name="volume_name" placeholder="Add volume name here" required = "True">
+  <input type="text" name="path" width="50%" placeholder="Add volume path here" required = "True">
   <input type="submit" value="Add">
   </form>
   </div>
@@ -33,13 +34,13 @@ function addCluster(cluster){
 
   addVolumes(cluster);
 
-  function handller_click(cluster_id, cluster) {
+  function handler_click(cluster_id, cluster) {
     return function() {
       cluster.state = !$(`#${cluster_id}`).hasClass('in');
     }
   }
 
-  var func = handller_click(cluster_id, cluster);
+  var func = handler_click(cluster_id, cluster);
 
 
   $(`#${cluster_id}_button`).on('click', function(event) {
@@ -59,13 +60,17 @@ function addCluster(cluster){
         $.ajax({
          type: "POST",
          url: url,
-               data: $(this).serialize(), // serializes the form's elements.
-               success: function(data)
-               {
-                   console.log("volume added"); // show response from the php script.
-                   $(self)[0].reset();
-                 }
-               });
+         data: $(this).serialize(), // serializes the form's elements.
+         statusCode: {
+            403: function (response) {
+                 alert('Cannot replicate to this folder!');
+            }
+         },
+         success: function(data) {
+            console.log("volume added"); // show response from the php script.
+               $(self)[0].reset();
+         }
+         });
       });
 }
 
@@ -75,7 +80,7 @@ function addVolumes(cluster){
   cluster_id = cluster.cluster_name.replace(/\s+/g, '');
   var result = '<ul>';
   cluster.volumes.forEach(function(volume){
-    result += `<li>${volume.name} <input type="checkbox" name="" id="${cluster_id}_${volume.name}"`
+    result += `<li>${volume.name} replicating to => ${volume.path} | Status: <input type="checkbox" name="" id="${cluster_id}_${volume.name}"`
     if (volume.replicating) {
       result +=  `checked></li>`
     } else {
@@ -90,7 +95,7 @@ function addVolumes(cluster){
 
 
     cluster.volumes.forEach(function(volume){
-      var func  = toggleCheckbox(cluster.cluster_name, volume.name)
+      var func  = toggleCheckbox(cluster.cluster_name, volume.name, volume.path)
       $(`#${cluster_id}_${volume.name}`).change(function(e){
         func(e)
       })
@@ -174,30 +179,30 @@ function validateForm(form_id, message){
     $.ajax({
      type: "POST",
      url: url,
-           data: $("#cluster_form").serialize(), // serializes the form's elements.
-           success: function(data)
-           {
-               console.log("cluster added"); // show response from the php script.
-               $("#cluster_form")[0].reset();
-             }
-           });
+     data: $("#cluster_form").serialize(), // serializes the form's elements.
+     success: function(data) {
+        console.log("cluster added"); // show response from the php script.
+         $("#cluster_form")[0].reset();
+        }
+     });
   });
 
 
 
 
-  function toggleCheckbox(cluster_name, volume_name) {
+  function toggleCheckbox(cluster_name, volume_name, path) {
     return function(element) {
-      console.log(cluster_name, volume_name)
+      console.log(cluster_name, volume_name, path)
       console.log(element.target.checked);
 
-      function ClusterData(cluster_name, volume_name, replication) {
+      function ClusterData(cluster_name, volume_name, path, replication) {
         this.cluster_name = cluster_name;
         this.volume_name = volume_name;
         this.replication = replication;
+        this.path = path;
       }
 
-      var cluster = new ClusterData(cluster_name, volume_name, element.target.checked);
+      var cluster = new ClusterData(cluster_name, volume_name, path, element.target.checked);
 
 
 
@@ -207,12 +212,10 @@ function validateForm(form_id, message){
        $.ajax({
          type: "POST",
          url: url,
-                   data: cluster,
-                   success: function(data)
-                   {
-                       console.log("success");
-                     }
-                   });
+         data: cluster,
+         success: function(data) {
+            console.log("success");
+         }
+       });
      }
-
    }

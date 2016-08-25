@@ -4,6 +4,7 @@ public class VolumeDTO {
 
     private String cluster_name;
     private String name;
+    private String path;
     private boolean replicating;
 
     public String getCluster_name() {
@@ -30,6 +31,14 @@ public class VolumeDTO {
         this.replicating = replicating;
     }
 
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -38,7 +47,8 @@ public class VolumeDTO {
         VolumeDTO dto = (VolumeDTO) o;
 
         if (!cluster_name.equals(dto.cluster_name)) return false;
-        return name.equals(dto.name);
+        if (!name.equals(dto.name)) return false;
+        return path.equals(dto.path);
 
     }
 
@@ -46,6 +56,7 @@ public class VolumeDTO {
     public int hashCode() {
         int result = cluster_name.hashCode();
         result = 31 * result + name.hashCode();
+        result = 31 * result + path.hashCode();
         return result;
     }
 
@@ -54,6 +65,7 @@ public class VolumeDTO {
         return "VolumeDTO{" +
                 "cluster_name='" + cluster_name + '\'' +
                 ", name='" + name + '\'' +
+                ", path='" + path + '\'' +
                 ", replicating=" + replicating +
                 '}';
     }

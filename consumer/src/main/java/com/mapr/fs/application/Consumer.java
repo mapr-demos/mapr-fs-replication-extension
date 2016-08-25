@@ -11,7 +11,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -114,7 +113,7 @@ public class Consumer {
             for (VolumeDTO dto : dao.getAllVolumes()) {
                 if (dto.isReplicating()) {
                     if (!volumes.contains(dto.getName())) {
-                        String replicationFolderForVolume = checkDir(replicationTargetFolder, dto.getName());
+                        String replicationFolderForVolume = checkDir(dto.getPath(), dto.getName());
                         service.submit(() -> {
                             try {
                                 new Gateway(dto.getName(), replicationFolderForVolume, volumes).processEvents();
