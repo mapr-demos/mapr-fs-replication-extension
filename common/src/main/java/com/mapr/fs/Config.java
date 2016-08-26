@@ -12,7 +12,7 @@ public class Config {
     private static final Logger log = Logger.getLogger(Config.class);
 
 
-    private static final String CONFIG_PATHS[] = {"/tmp/config.conf", "config.conf"};
+    private static String CONFIG_PATHS[] = {"/tmp/config.conf", "config.conf"};
     private static final String KAFKA_STREAM = "stream";
     private static final String MONITOR_TOPIC = "change_%s";
     public static final String APPS_DIR = new Config("cluster.").getProperties().getProperty("database");
@@ -39,6 +39,10 @@ public class Config {
         }
 
         fillPropertiesWithPrefixes(configProps, prefixes);
+    }
+
+    public static void addConfigPath(String[] path) {
+        CONFIG_PATHS = path;
     }
 
     private void fillPropertiesWithPrefixes(Properties configProps, String[] prefixes) {

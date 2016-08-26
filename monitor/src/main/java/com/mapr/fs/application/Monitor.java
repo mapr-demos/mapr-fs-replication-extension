@@ -300,6 +300,7 @@ public class Monitor {
                 FileState newState = FileState.getFileInfo(changed);
                 if (newState != null) {
                     for (List<Long> offsets : Lists.partition(op.getModifiedOffsets(), MAX_OFFSETS_SIZE)) {
+                        log.info(String.format("Op %s is %.3f s old\n", op, System.nanoTime() / 1e9 - op.start));
                         emitModify(producer, changed, newState.getFileSize(), offsets,
                                 newState.changedBlockContentEncoded(offsets));
                         monitorDao.put(newState.toJSON());

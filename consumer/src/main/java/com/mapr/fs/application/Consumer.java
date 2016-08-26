@@ -7,6 +7,7 @@ import com.mapr.fs.dao.dto.FileStatusDto;
 import com.mapr.fs.dao.dto.VolumeDTO;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
+import org.apache.commons.cli.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -88,25 +89,31 @@ public class Consumer {
 
     public static void main(String[] args) throws Exception {
 
+        Option option = new Option("p", "path", true, "Path to config file");
+        option.setArgs(1);
+        option.setOptionalArg(false);
+        option.setArgName("Path to config file ");
+
+        Options options = new Options();
+        options.addOption(option);
+
+        CommandLineParser cmdLinePosixParser = new PosixParser();
+        CommandLine commandLine = cmdLinePosixParser.parse(options, args);
+
+        if (commandLine.hasOption("p")) {
+            String[] arguments = commandLine.getOptionValues("p");
+            Config.addConfigPath(arguments);
+            log.info("Find config file in " + arguments[0]);
+        }
+
         Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
         ClusterDAO dao = new ClusterDAO();
         BasicConfigurator.configure();
 
-        Config conf = new Config("cluster.");
-        String replicationTargetFolder= conf.getProperties().getProperty("target_folder");
-
-        if ( replicationTargetFolder == null || replicationTargetFolder.isEmpty()) {
-            log.error("Configuration should contain  the 'cluster.target_folder' property");
-            throw new RuntimeException("Configuration should contain  the 'cluster.target_folder' property");
-        }
-
-
-        log.info("Replication files/events will be saved in "+ replicationTargetFolder);
-
-        startConsuming(volumes, dao, replicationTargetFolder);
+        startConsuming(volumes, dao);
     }
 
-    private static void startConsuming(Set<String> volumes, ClusterDAO dao, String replicationTargetFolder) throws IOException, InterruptedException {
+    private static void startConsuming(Set<String> volumes, ClusterDAO dao) throws IOException, InterruptedException {
         ExecutorService service = Executors.newCachedThreadPool();
 
         while (true) {
@@ -114,6 +121,7 @@ public class Consumer {
                 if (dto.isReplicating()) {
                     if (!volumes.contains(dto.getName())) {
                         String replicationFolderForVolume = checkDir(dto.getPath(), dto.getName());
+                        log.info("Replication files/events will be saved in "+ replicationFolderForVolume + "/" + dto.getName());
                         service.submit(() -> {
                             try {
                                 new Gateway(dto.getName(), replicationFolderForVolume, volumes).processEvents();
