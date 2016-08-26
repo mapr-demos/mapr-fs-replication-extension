@@ -16,6 +16,8 @@ import com.mapr.fs.messages.RenameTo;
 import com.mapr.fs.messages.RenameFrom;
 import com.mapr.fs.messages.Modify;
 
+import com.mapr.fs.dao.VolumeDAO;
+import com.mapr.fs.dao.dto.MonitorDTO;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
@@ -34,12 +36,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 
-import java.util.Map;
-import java.util.Queue;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Iterator;
+import java.util.*;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -66,6 +63,7 @@ public class Monitor {
     private Queue<FileOperation> changeBuffer;
     private Map<Object, FileOperation> changeMap;
     private final String volumeName;
+    private Set volumes;
 
     public enum OrderingRule {
         VOLUME {
@@ -106,13 +104,14 @@ public class Monitor {
     /**
      * Creates a WatchService and registers the given directory
      */
-    public Monitor(String volumeName, Path dir, OrderingRule order) throws IOException {
+    public Monitor(String volumeName, Path dir, OrderingRule order, Set volumes) throws IOException {
         this.volumeName = volumeName;
         log.info(volumeName);
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
         changeBuffer = new ConcurrentLinkedQueue<>();
         changeMap = new HashMap<>();
+        this.volumes = volumes;
 
         this.root = dir;
         this.order = order;
@@ -129,6 +128,9 @@ public class Monitor {
         startBufferProcessor();
 
         while (true) {
+            if (!volumes.contains(volumeName)) {
+                break;
+            }
             // wait for key to be signalled
             WatchKey key;
             try {
@@ -378,52 +380,42 @@ public class Monitor {
         monitorDao.put(FileState.getFileInfo(f).toJSON());
     }
 
-    private static void usage() {
-        log.error("usage: [<volumeName1>:<path1>] [<volume2>:<path2>] ...");
-        System.exit(-1);
+    public static void main(String[] args) throws IOException, InterruptedException {
+        try {
+            Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
+            VolumeDAO dao = new VolumeDAO();
+
+            BasicConfigurator.configure();
+            startMonitoring(volumes, dao);
+        } catch (Exception ex) {
+            log.info(ex);
+        }
     }
 
-    private static Map<String, String> parseArguments(String[] args) throws IOException {
-        Map<String, String> map = new HashMap<>();
+    private static void startMonitoring(Set<String> volumes, VolumeDAO dao) throws IOException, InterruptedException {
+        ExecutorService service = Executors.newCachedThreadPool();
 
-        for (String val : args) {
-            String[] arr = val.split(":");
-
-            if (!map.containsKey(arr[0])) {
-                map.put(arr[0], arr[1]);
-            } else {
-                throw new IllegalArgumentException("Trying to add existed volume");
-            }
-        }
-
-        return map;
-    }
-
-    public static void main(String[] args) throws IOException {
-        if (args.length == 0) {
-            usage();
-        }
-
-        BasicConfigurator.configure();
-        Map<String, String> map = parseArguments(args);
-
-        ExecutorService service = Executors.newFixedThreadPool(map.size());
-
-//         registerDirectory directory and process its events
-        for (Map.Entry<String, String> pair : map.entrySet()) {
-            try {
-                service.submit(() -> {
-                    Path dir = Paths.get(pair.getValue());
-                    try {
-                        new Monitor(pair.getKey(), dir, OrderingRule.VOLUME).processEvents();
-                    } catch (IOException e) {
-                        log.error(e);
-                        service.shutdownNow();
+        while (true) {
+            for (MonitorDTO dto : dao.getAllVolumes()) {
+                if (dto.isMonitoring()) {
+                    if (!volumes.contains(dto.getName())) {
+                        Path path = Paths.get(dto.get_id());
+                        service.submit(() -> {
+                            try {
+                                new Monitor(dto.getName(), path, OrderingRule.VOLUME, volumes).processEvents();
+                            } catch (IOException e) {
+                                log.error("Cannot create Gateway" + e.getMessage());
+                            }
+                        });
+                        volumes.add(dto.getName());
                     }
-                });
-            } catch (Exception e) {
-                log.error(e);
+                } else {
+                    if (volumes.contains(dto.getName())) {
+                        volumes.remove(dto.getName());
+                    }
+                }
             }
+            Thread.sleep(1000);
         }
     }
 }

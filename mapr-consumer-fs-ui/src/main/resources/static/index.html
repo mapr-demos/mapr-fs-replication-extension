@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <style type="text/css">
+        .cluster {
+            margin: 10px;
+        }
+        .clusters_container {
+            margin-left: 20px;
+        }
+    </style>
+    <menu>
+        <li><a href="monitoring.html">Monitoring</a></li>
+    </menu>
+</head>
+<body>
+    <div class="clusters_container">
+        <h1>Replication sources</h1>
+        <div id='clusters'>
+        </div>
+        <div id='control'>
+            <form id="cluster_form">
+              <input type="text" name="cluster_name" placeholder="Add cluster name here" required = "True">
+              <input type="submit" value="Add">
+            </form>
+        </div>
+    </div>
+
+<script src="js/some.js"></script>
+
+</body>
+</html>

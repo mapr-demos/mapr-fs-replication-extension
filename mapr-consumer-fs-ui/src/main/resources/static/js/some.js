@@ -140,7 +140,6 @@ function reloadClusters() {
       });
     }
   });
-
 }
 
 

@@ -16,13 +16,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
 
 public class MonitorTest extends TestCase {
     public void testBasicFileOps() throws IOException, InterruptedException {
         File dir = Files.createTempDir();
-        Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME);
+        Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME, new HashSet());
         MessagePlayer.runScript("events-1.json", dir.toString(), mon);
         JsonProducer producer = getMockProducer();
         mon.processBufferedEvents(producer);
@@ -39,7 +40,7 @@ public class MonitorTest extends TestCase {
     public void testNoEventsTooEarly() throws IOException, InterruptedException {
         File dir = Files.createTempDir();
         try {
-            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME);
+            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME, new HashSet());
             // make timeout really long to make debugging safer
             FileOperation.setMaxTimeForRename(60);
 
@@ -73,7 +74,7 @@ public class MonitorTest extends TestCase {
     public void testDelayAllowsEvents() throws Exception {
         File dir = Files.createTempDir();
         try {
-            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME);
+            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.VOLUME, new HashSet());
             FileOperation.setMaxTimeForRename(2);
 
             Path f = new File(dir, "f1").toPath();
@@ -133,7 +134,7 @@ public class MonitorTest extends TestCase {
     public void testRename() throws Exception {
         File dir = Files.createTempDir();
         try {
-            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.FILE);
+            Monitor mon = new Monitor("test", dir.toPath(), Monitor.OrderingRule.FILE, new HashSet());
             FileOperation.setMaxTimeForRename(2000);
 
             Path f1 = new File(dir, "f1").toPath();

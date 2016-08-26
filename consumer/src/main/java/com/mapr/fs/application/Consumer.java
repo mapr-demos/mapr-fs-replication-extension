@@ -126,7 +126,7 @@ public class Consumer {
                             try {
                                 new Gateway(dto.getName(), replicationFolderForVolume, volumes).processEvents();
                             } catch (IOException e) {
-                                log.error("Cannot create Gateway"+ e.getMessage());
+                                log.error("Cannot create Gateway" + e.getMessage());
                             }
                         });
                         volumes.add(dto.getName());
@@ -141,18 +141,18 @@ public class Consumer {
         }
     }
 
-  /**
-   * Create the target folder if it does not exist
-   * @param replicationTargetFolder parent folder for "all replication" events for this consumer instance
-   * @param topicName Topic name, should be the name of the source volume
-   */
+    /**
+     * Create the target folder if it does not exist
+     *
+     * @param replicationTargetFolder parent folder for "all replication" events for this consumer instance
+     * @param topicName               Topic name, should be the name of the source volume
+     */
     protected static String checkDir(String replicationTargetFolder, String topicName) {
-        File file  = new File(replicationTargetFolder , topicName);
+        File file = new File(replicationTargetFolder, topicName);
         if (!file.exists()) {
             file.mkdirs();
-            log.info(file +" created");
+            log.info(file + " created");
         }
-
         return file.getAbsolutePath();
     }
 }

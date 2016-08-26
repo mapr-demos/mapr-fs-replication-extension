@@ -47,7 +47,8 @@
         <module>common</module>
         <module>consumer</module>
         <module>monitor</module>
-        <module>mapr-fs-ui</module>
+        <module>mapr-consumer-fs-ui</module>
+        <module>mapr-monitor-fs-ui</module>
         <module>maprfs-s3-replication</module>
     </modules>
 

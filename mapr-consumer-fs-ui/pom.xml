@@ -10,7 +10,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mapr-fs-ui</artifactId>
+    <artifactId>mapr-consumer-fs-ui</artifactId>
     <packaging>jar</packaging>
 
     <repositories>
