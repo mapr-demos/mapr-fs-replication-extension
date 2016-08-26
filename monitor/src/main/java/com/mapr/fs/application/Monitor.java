@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import com.mapr.fs.Config;
-import com.mapr.fs.FileOperation;
-import com.mapr.fs.FileState;
-import com.mapr.fs.JsonProducer;
+import com.mapr.fs.*;
 import com.mapr.fs.dao.MonitorDAO;
 
 import com.mapr.fs.messages.Create;
@@ -18,6 +15,7 @@ import com.mapr.fs.messages.Modify;
 
 import com.mapr.fs.dao.VolumeDAO;
 import com.mapr.fs.dao.dto.MonitorDTO;
+import org.apache.commons.cli.*;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
@@ -380,7 +378,10 @@ public class Monitor {
         monitorDao.put(FileState.getFileInfo(f).toJSON());
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException, ParseException {
+
+        Util.setConfigPath(args);
+
         try {
             Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
             VolumeDAO dao = new VolumeDAO();

@@ -1,13 +1,12 @@
 package com.mapr.fs.application;
 
-import com.mapr.fs.Config;
+import com.mapr.fs.*;
 import com.mapr.fs.dao.ClusterDAO;
 import com.mapr.fs.dao.VolumeStatusDao;
 import com.mapr.fs.dao.dto.FileStatusDto;
 import com.mapr.fs.dao.dto.VolumeDTO;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
-import org.apache.commons.cli.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -89,22 +88,7 @@ public class Consumer {
 
     public static void main(String[] args) throws Exception {
 
-        Option option = new Option("p", "path", true, "Path to config file");
-        option.setArgs(1);
-        option.setOptionalArg(false);
-        option.setArgName("Path to config file ");
-
-        Options options = new Options();
-        options.addOption(option);
-
-        CommandLineParser cmdLinePosixParser = new PosixParser();
-        CommandLine commandLine = cmdLinePosixParser.parse(options, args);
-
-        if (commandLine.hasOption("p")) {
-            String[] arguments = commandLine.getOptionValues("p");
-            Config.addConfigPath(arguments);
-            log.info("Find config file in " + arguments[0]);
-        }
+        Util.setConfigPath(args);
 
         Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
         ClusterDAO dao = new ClusterDAO();
