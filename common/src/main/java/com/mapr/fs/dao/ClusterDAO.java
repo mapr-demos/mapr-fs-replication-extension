@@ -60,7 +60,7 @@ public class ClusterDAO extends AbstractDAO {
                 clusterDTO.getVolumes().remove(new VolumeDTO(cluster, volume, path, !replication));
                 clusterDTO.getVolumes().add(new VolumeDTO(cluster, volume, path, replication));
             } else {
-                volumeDTO = new VolumeDTO(cluster, volume, path replication);
+                volumeDTO = new VolumeDTO(cluster, volume, path, replication);
                 clusterDTO.getVolumes().add(volumeDTO);
             }
 
