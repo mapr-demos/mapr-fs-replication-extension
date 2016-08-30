@@ -215,7 +215,7 @@ public class Monitor {
         }
     }
 
-    private void processDeleteEvent(Path watchDir, WatchEvent<Path> event) {
+    private void processDeleteEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
         Path filePath = watchDir.resolve(event.context());
         log.info(ENTRY_DELETE + ": " + filePath);
 
@@ -229,6 +229,7 @@ public class Monitor {
         if (key != null) {
             changeMap.put(key, op);
         } // TODO should this have an else to record an unexpected event?
+        monitorDao.remove(filePath);
     }
 
     private void processCreateEvent(Path watchDir, WatchEvent<Path> event) throws IOException {
