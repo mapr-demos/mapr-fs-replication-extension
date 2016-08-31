@@ -3,6 +3,7 @@ package com.mapr.fs.dao;
 
 import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
+import com.mapr.fs.Config;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -11,8 +12,6 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystems;
-
-import static com.mapr.fs.Config.APPS_DIR;
 
 /**
  * This class is used as a base for all DAO that needs access to MapR-DB
@@ -78,7 +77,7 @@ public class AbstractDAO {
      * @throws IOException
      */
     protected String getFullTableName(String type, String name) throws IOException {
-        java.nio.file.Path fullTableName = FileSystems.getDefault().getPath(APPS_DIR, type, name);
+        java.nio.file.Path fullTableName = FileSystems.getDefault().getPath(Config.getAppsDir(), type, name);
         return fullTableName.toString();
     }
 

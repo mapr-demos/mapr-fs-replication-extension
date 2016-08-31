@@ -1,5 +1,7 @@
 package com.mapr.fs.application;
 
+import com.mapr.fs.Util;
+import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,8 +16,11 @@ public class ApplicationStarter {
 
     private static final Logger log = Logger.getLogger(ApplicationStarter.class);
 
-    public static void main(String[] args) {
-        start(args);
+    public static void main(String[] args) throws ParseException {
+        try {
+            Util.setConfigPath(args);
+            start(args);
+        } catch (Exception ignored) {}
     }
 
     private static void start(String[] args) {

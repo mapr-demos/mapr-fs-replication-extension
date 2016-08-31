@@ -380,18 +380,15 @@ public class Monitor {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException, ParseException {
-
-        Util.setConfigPath(args);
+        BasicConfigurator.configure();
 
         try {
+            Util.setConfigPath(args);
             Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
             VolumeDAO dao = new VolumeDAO();
 
-            BasicConfigurator.configure();
             startMonitoring(volumes, dao);
-        } catch (Exception ex) {
-            log.info(ex);
-        }
+        } catch (Exception ignored) {}
     }
 
     private static void startMonitoring(Set<String> volumes, VolumeDAO dao) throws IOException, InterruptedException {

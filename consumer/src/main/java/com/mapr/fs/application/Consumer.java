@@ -87,14 +87,15 @@ public class Consumer {
     }
 
     public static void main(String[] args) throws Exception {
-
-        Util.setConfigPath(args);
-
-        Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
-        ClusterDAO dao = new ClusterDAO();
         BasicConfigurator.configure();
 
-        startConsuming(volumes, dao);
+        try {
+            Util.setConfigPath(args);
+            Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
+            ClusterDAO dao = new ClusterDAO();
+
+            startConsuming(volumes, dao);
+        } catch (Exception ignored) {}
     }
 
     private static void startConsuming(Set<String> volumes, ClusterDAO dao) throws IOException, InterruptedException {
@@ -105,7 +106,7 @@ public class Consumer {
                 if (dto.isReplicating()) {
                     if (!volumes.contains(dto.getName())) {
                         String replicationFolderForVolume = checkDir(dto.getPath(), dto.getName());
-                        log.info("Replication files/events will be saved in "+ replicationFolderForVolume + "/" + dto.getName());
+                        log.info("Replication files/events will be saved in " + replicationFolderForVolume + "/" + dto.getName());
                         service.submit(() -> {
                             try {
                                 new Gateway(dto.getName(), replicationFolderForVolume, volumes).processEvents();

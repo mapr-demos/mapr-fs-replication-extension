@@ -12,10 +12,9 @@ public class Config {
     private static final Logger log = Logger.getLogger(Config.class);
 
 
-    private static String CONFIG_PATHS[] = {"/tmp/config.conf", "config.conf"};
+    private static String configPath;
     private static final String KAFKA_STREAM = "stream";
     private static final String MONITOR_TOPIC = "change_%s";
-    public static final String APPS_DIR = new Config("cluster.").getProperties().getProperty("database");
 
     private Properties properties = new Properties();
 
@@ -31,18 +30,22 @@ public class Config {
     }
 
     public Config(String... prefixes) {
-        Properties configProps = loadConfig();
+        Properties configProps = loadConfig(configPath);
 
         if (properties == null) {
-            log.error("Configuration file not found");
+            log.error("Configuration file not found at path " + configProps);
             throw new RuntimeException("Configuration file not found");
         }
 
         fillPropertiesWithPrefixes(configProps, prefixes);
     }
 
-    public static void addConfigPath(String[] path) {
-        CONFIG_PATHS = path;
+    public static void addConfigPath(String path) {
+        configPath = path;
+    }
+
+    public static String getAppsDir() {
+        return new Config("cluster.").getProperties().getProperty("database");
     }
 
     private void fillPropertiesWithPrefixes(Properties configProps, String[] prefixes) {
@@ -53,17 +56,6 @@ public class Config {
                 }
             }
         }
-    }
-
-    private Properties loadConfig() {
-        Properties properties = null;
-        for (String path : CONFIG_PATHS) {
-            properties = loadConfig(path);
-            if (properties != null) {
-                break;
-            }
-        }
-        return properties;
     }
 
     private Properties loadConfig(String path) {
