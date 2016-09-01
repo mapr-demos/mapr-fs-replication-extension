@@ -95,7 +95,9 @@ public class Consumer {
             ClusterDAO dao = new ClusterDAO();
 
             startConsuming(volumes, dao);
-        } catch (Exception ignored) {}
+        } catch (Exception ex) {
+            log.error(ex);
+        }
     }
 
     private static void startConsuming(Set<String> volumes, ClusterDAO dao) throws IOException, InterruptedException {

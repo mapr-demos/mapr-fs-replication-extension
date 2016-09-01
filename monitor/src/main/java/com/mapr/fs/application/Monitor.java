@@ -388,7 +388,9 @@ public class Monitor {
             VolumeDAO dao = new VolumeDAO();
 
             startMonitoring(volumes, dao);
-        } catch (Exception ignored) {}
+        } catch (Exception ex) {
+            log.error(ex);
+        }
     }
 
     private static void startMonitoring(Set<String> volumes, VolumeDAO dao) throws IOException, InterruptedException {

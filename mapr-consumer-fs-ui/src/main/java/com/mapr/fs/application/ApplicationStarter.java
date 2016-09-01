@@ -20,7 +20,9 @@ public class ApplicationStarter {
         try {
             Util.setConfigPath(args);
             start(args);
-        } catch (Exception ignored) {}
+        } catch (Exception ex) {
+            log.error(ex);
+        }
     }
 
     private static void start(String[] args) {

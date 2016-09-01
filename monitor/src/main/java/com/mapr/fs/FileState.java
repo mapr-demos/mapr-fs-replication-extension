@@ -88,11 +88,22 @@ public class FileState {
 
         if (other != null) {
             Iterator<Long> j = other.hashes.iterator();
-            while (i.hasNext() && j.hasNext()) {
-                if (!i.next().equals(j.next())) {
-                    r.add(offset);
+
+            if (other.hashes.size() > this.hashes.size()) {
+                while (i.hasNext() && j.hasNext()) {
+                    if (i.next().equals(j.next())) {
+                        r.add(offset);
+                    }
+                    offset += BLOCK_SIZE;
                 }
-                offset += BLOCK_SIZE;
+            } else {
+
+                while (i.hasNext() && j.hasNext()) {
+                    if (!i.next().equals(j.next())) {
+                        r.add(offset);
+                    }
+                    offset += BLOCK_SIZE;
+                }
             }
         }
 
