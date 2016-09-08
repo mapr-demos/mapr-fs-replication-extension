@@ -50,6 +50,7 @@
         <module>mapr-consumer-fs-ui</module>
         <module>mapr-monitor-fs-ui</module>
         <module>maprfs-s3-replication</module>
+        <module>mapr-s3-replication-ui</module>
     </modules>
 
     <dependencies>
