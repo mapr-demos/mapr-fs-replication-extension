@@ -24,7 +24,7 @@ public class SourceDAO extends AbstractDAO {
         sourceTable = this.getTable(fullPath);
     }
 
-    public void put(String volume, String bucket, Boolean creating, Boolean deleting, Boolean modifying, Boolean moving) throws IOException {
+    public void put(String volume, String path, String bucket, Boolean creating, Boolean deleting, Boolean modifying, Boolean moving) throws IOException {
         Document document = sourceTable.findById(bucket);
         ObjectMapper mapper = new ObjectMapper();
 
@@ -36,7 +36,7 @@ public class SourceDAO extends AbstractDAO {
             sourceDTO = new SourceDTO(bucket, new LinkedHashSet<>());
         }
 
-        updateVolumes(volume, creating, deleting, modifying, moving, sourceDTO);
+        updateVolumes(volume, path, creating, deleting, modifying, moving, sourceDTO);
 
         String json = mapper.writeValueAsString(sourceDTO);
         if (json != null) {
@@ -44,20 +44,20 @@ public class SourceDAO extends AbstractDAO {
         }
     }
 
-    private void updateVolumes(String volume, Boolean creating, Boolean deleting, Boolean modifying, Boolean moving, SourceDTO sourceDTO) {
+    private void updateVolumes(String volume, String path, Boolean creating, Boolean deleting, Boolean modifying, Boolean moving, SourceDTO sourceDTO) {
         VolumeOfSourceDTO volumeOfSourceDTO;
         if (!sourceDTO.getVolumes().isEmpty()) {
-            boolean contain = sourceDTO.getVolumes().contains(new VolumeOfSourceDTO(volume, creating, deleting, modifying, moving));
+            boolean contain = sourceDTO.getVolumes().contains(new VolumeOfSourceDTO(volume, path, creating, deleting, modifying, moving));
             if (contain) {
-                sourceDTO.getVolumes().remove(new VolumeOfSourceDTO(volume, creating, deleting, modifying, moving));
-                sourceDTO.getVolumes().add(new VolumeOfSourceDTO(volume, creating, deleting, modifying, moving));
+                sourceDTO.getVolumes().remove(new VolumeOfSourceDTO(volume, path, creating, deleting, modifying, moving));
+                sourceDTO.getVolumes().add(new VolumeOfSourceDTO(volume, path, creating, deleting, modifying, moving));
             } else {
-                volumeOfSourceDTO = new VolumeOfSourceDTO(volume, creating, deleting, modifying, moving);
+                volumeOfSourceDTO = new VolumeOfSourceDTO(volume, path, creating, deleting, modifying, moving);
                 sourceDTO.getVolumes().add(volumeOfSourceDTO);
             }
 
         } else {
-            volumeOfSourceDTO = new VolumeOfSourceDTO(volume, creating, deleting, modifying, moving);
+            volumeOfSourceDTO = new VolumeOfSourceDTO(volume, path, creating, deleting, modifying, moving);
             sourceDTO.getVolumes().add(volumeOfSourceDTO);
         }
         filterVolumes(sourceDTO);
@@ -90,13 +90,13 @@ public class SourceDAO extends AbstractDAO {
         return null;
     }
 
-    public void deleteVolume(String bucketName, String volumeName) throws IOException {
+    public void deleteVolume(String bucketName, String volumeName, String path) throws IOException {
         Document document = sourceTable.findById(bucketName);
         ObjectMapper mapper = new ObjectMapper();
         if (document != null) {
 
             SourceDTO sourceDTO = mapper.readValue(document.asJsonString(), SourceDTO.class);
-            sourceDTO.getVolumes().remove(new VolumeOfSourceDTO(volumeName, true, true, true, true));
+            sourceDTO.getVolumes().remove(new VolumeOfSourceDTO(volumeName, path, true, true, true, true));
 
             String json = mapper.writeValueAsString(sourceDTO);
             if (json != null) {

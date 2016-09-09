@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class VolumeOfSourceDTO {
 
     private String volumeName;
+    private String path;
 
     private boolean creating;
     private boolean deleting;

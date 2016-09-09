@@ -22,6 +22,7 @@ public class SourceController {
     public ResponseEntity addSource(
             @RequestParam("bucket") String bucket,
             @RequestParam("volume_name") String volume,
+            @RequestParam("path") String path,
             @RequestParam("creating") Boolean creating,
             @RequestParam("deleting") Boolean deleting,
             @RequestParam("modifying") Boolean modifying,
@@ -29,11 +30,12 @@ public class SourceController {
     ) throws IOException {
         log.info("bucket: " + bucket);
         log.info("volume: " + volume);
+        log.info("path: " + path);
         log.info("creating: " + creating);
         log.info("deleting: " + deleting);
         log.info("modifying: " + modifying);
         log.info("moving: " + moving);
-        new SourceDAO().put(volume, bucket, creating, deleting, modifying, moving);
+        new SourceDAO().put(volume, path, bucket, creating, deleting, modifying, moving);
         return ResponseEntity.ok().build();
     }
 
@@ -61,12 +63,13 @@ public class SourceController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity deleteSource(
             @RequestParam("bucket") String bucket,
+            @RequestParam("path") String path,
             @RequestParam("volume_name") String volume
     ) throws IOException {
         log.info("bucket: " + bucket);
         log.info("volume: " + volume);
 
-        new SourceDAO().deleteVolume(bucket, volume);
+        new SourceDAO().deleteVolume(bucket, volume, path);
         return ResponseEntity.ok().build();
     }
 }
