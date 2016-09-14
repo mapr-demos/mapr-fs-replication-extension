@@ -14,3 +14,6 @@ sudo -u mapr java -jar ~/jars/mapr-monitor-fs-ui-1.0-SNAPSHOT.jar -p ~/jars/conf
 
 #Start S3 UI
 sudo -u mapr java -jar ~/jars/mapr-s3-replication-ui-1.0-SNAPSHOT.jar -p ~/jars/config.conf
+
+#Start s3Replicator
+sudo -u mapr java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=6006 -cp "`mapr classpath`:/home/vagrant/jars/maprfs-s3-replication-1.0-SNAPSHOT-jar-with-dependencies.jar" com.mapr.fs.s3.S3Replicator -p ~/jars/config.conf
