@@ -1,6 +1,7 @@
 package com.mapr.fs.s3;
 
 import com.mapr.fs.Config;
+import com.mapr.fs.Util;
 import com.mapr.fs.dao.SourceDAO;
 import com.mapr.fs.dao.dto.SourceDTO;
 import com.mapr.fs.dao.dto.VolumeOfSourceDTO;
@@ -20,6 +21,7 @@ public class S3Replicator {
     public static void main(String[] args) throws Exception {
         // Load configuration for S3 : bucket, volumes, ....
         // TODO : move from configuration to DB+API
+        Util.setConfigPath(args);
         BasicConfigurator.configure();
         Config conf = new Config("s3.");
         Properties properties = conf.getProperties();
@@ -80,7 +82,6 @@ public class S3Replicator {
 
 
                     if (!volumes.contains(volumeDTO.getVolumeName())) {
-
                         boolean createEnabled = volumeDTO.isCreating();
                         boolean modifyEnabled = volumeDTO.isModifying();
                         boolean deleteEnabled = volumeDTO.isDeleting();
