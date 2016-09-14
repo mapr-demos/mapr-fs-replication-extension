@@ -3,7 +3,6 @@ package com.mapr.fs.s3.events;
 import com.mapr.fs.messages.Create;
 import com.mapr.fs.messages.Message;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +30,7 @@ public class CreateEvent extends S3Event {
             log.info("File created: " + filePath);
         } else {
             log.info("Create Folder");
-            createFolder(bucket, createMessage.getName());
+            createFolder(bucket, filePath);
         }
         log.info(filePath);
     }

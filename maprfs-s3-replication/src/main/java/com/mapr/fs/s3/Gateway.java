@@ -58,7 +58,7 @@ public class Gateway {
                 }
                 consumer.commitSync();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error(e);
         } finally {
             if (consumer != null) {

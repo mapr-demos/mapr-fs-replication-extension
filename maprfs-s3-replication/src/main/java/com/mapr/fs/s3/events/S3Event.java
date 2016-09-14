@@ -39,9 +39,16 @@ public abstract class S3Event implements Event {
 
     protected void sendFile(String bucket, Path path, String object) {
         try {
+            String pathToFile = path.toString();
+
             log.info("Uploading a new object to S3 from a file\n");
-            File file = new File(path.toString());
-            s3client.putObject(new PutObjectRequest(bucket, object, file));
+            File file = new File(pathToFile);
+
+            if (pathToFile.startsWith("/")) {
+                pathToFile = pathToFile.substring(1);
+            }
+
+            s3client.putObject(new PutObjectRequest(bucket, pathToFile, file));
         } catch (AmazonServiceException ase) {
             log.info("Caught an AmazonServiceException, which " +
                     "means your request made it " +
@@ -65,6 +72,11 @@ public abstract class S3Event implements Event {
 
     protected void createFolder(String bucket, String folder) {
         try {
+
+            if (folder.startsWith("/")) {
+                folder = folder.substring(1);
+            }
+
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(0);
             // create empty content

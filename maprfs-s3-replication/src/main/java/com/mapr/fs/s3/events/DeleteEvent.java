@@ -15,7 +15,8 @@ public class DeleteEvent extends S3Event {
     @Override
     public void execute(String volumePath) throws IOException {
         log.info("Delete object in S3");
-        this.deleteObject(bucket, ((Delete) message).getName());
+        String filePath = volumePath + "/" + ((Delete) message).getName();
+        this.deleteObject(bucket, filePath);
 
     }
 
