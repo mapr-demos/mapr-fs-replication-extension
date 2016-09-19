@@ -41,8 +41,6 @@ public class VolumeDAO extends AbstractDAO {
             monitorDTO = getVolumeDTO(volumeName, path, monitoring);
         }
 
-
-
         String json = mapper.writeValueAsString(monitorDTO);
         if (json != null) {
             put(json);

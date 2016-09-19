@@ -12,24 +12,22 @@ function fetchSources() {
         var result = [];
 
         data.sources.forEach(function(rawSource) {
-            rawSource.volumes
-                .filter(function(volume) {
-                  //TODO refactor server which return null in volumes
-                  return volume;
-                })
-                .reverse()
-                .forEach(function(volume) {
+            var volume = rawSource.volumes;
+            for (var key in volume) {
+                if (rawSource.volumes.hasOwnProperty(key)) {
                     result.push({
                         sourceID: sourceID++,
                         bucketName: rawSource._id,
-                        volumeName: volume.volumeName,
-                        path: volume.path,
-                        creating: volume.creating,
-                        deleting: volume.deleting,
-                        moving: volume.moving,
-                        modifying: volume.modifying
+                        volumeName: volume[key].volumeName,
+                        path: volume[key].volumePath,
+                        creating: volume[key].createEnabled,
+                        deleting: volume[key].deleteEnabled,
+                        moving: volume[key].renameEnabled,
+                        modifying: volume[key].modifyEnabled
+
                     });
-                });
+                }
+            }
         });
 
         result.forEach(function(source) {

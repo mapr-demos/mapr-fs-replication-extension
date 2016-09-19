@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
+import java.util.HashMap;
 
 @Data
 @AllArgsConstructor(suppressConstructorProperties = true)
@@ -14,5 +14,5 @@ public class SourceDTO {
 
     @JsonProperty("_id")
     private String bucket;
-    private Set<VolumeOfSourceDTO> volumes;
+    private HashMap<String, PluginConfigurationDTO> volumes;
 }

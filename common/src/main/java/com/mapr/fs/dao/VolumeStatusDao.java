@@ -11,7 +11,9 @@ import org.ojai.DocumentStream;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 
 @Repository
@@ -33,8 +35,7 @@ public class VolumeStatusDao extends AbstractDAO {
         Document document = volumeStatusTable.findById(volumeName);
         if (document != null) {
             return mapper.readValue(document.asJsonString(), VolumeStatusDto.class);
-        }
-        else return null;
+        } else return null;
     }
 
     public List<VolumeStatusDto> getAllVolumeFileStatuses() throws IOException {
@@ -43,7 +44,7 @@ public class VolumeStatusDao extends AbstractDAO {
         List<VolumeStatusDto> volumes = new LinkedList<>();
 
         if (vols != null) {
-            for(Document doc : vols) {
+            for (Document doc : vols) {
                 VolumeStatusDto vd = mapper.readValue(doc.asJsonString(), VolumeStatusDto.class);
                 volumes.add(vd);
             }
@@ -58,23 +59,22 @@ public class VolumeStatusDao extends AbstractDAO {
             String object = mapper.writeValueAsString(volumeStatusDto);
             volumeStatusTable.insertOrReplace(MapRDB.newDocument(object));
             return true;
-        }
-        else return false;
+        } else return false;
     }
+
     public boolean putFileStatusByVolumeName(String volumeName, FileStatusDto fileStatusDto) throws IOException {
 
         ObjectMapper mapper = new ObjectMapper();
         VolumeStatusDto volumeStatusDto = getVolumeFileStatusesByVolumeName(volumeName);
-        if (volumeStatusDto != null){
-            if(!volumeStatusDto.getFiles().add(fileStatusDto)){
+        if (volumeStatusDto != null) {
+            if (!volumeStatusDto.getFiles().add(fileStatusDto)) {
                 volumeStatusDto.getFiles().remove(fileStatusDto);
                 volumeStatusDto.getFiles().add(fileStatusDto);
             }
             String doc = mapper.writeValueAsString(volumeStatusDto);
             volumeStatusTable.insertOrReplace(MapRDB.newDocument(doc));
             return true;
-        }
-        else {
+        } else {
             LinkedHashSet<FileStatusDto> dtoSet = new LinkedHashSet<>();
             dtoSet.add(fileStatusDto);
             VolumeStatusDto dto = new VolumeStatusDto(volumeName, dtoSet);

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mapr.fs.Util;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.messages.*;
-import com.mapr.fs.s3.PluginConfiguration;
+import com.mapr.fs.PluginConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,7 @@ public class EventFactory {
         if (message instanceof Create) {
             if (pluginConfiguration.isCreateEnabled()) {
                 return new CreateEvent(message,
-                        pluginConfiguration.getBucket(),
+                        pluginConfiguration.getBucketName(),
                         pluginConfiguration.getAccessKey(),
                         pluginConfiguration.getSecretKey()
                 );
@@ -54,7 +54,7 @@ public class EventFactory {
         } else if (message instanceof Delete) {
             if (pluginConfiguration.isDeleteEnabled()) {
                 return new DeleteEvent(message,
-                        pluginConfiguration.getBucket(),
+                        pluginConfiguration.getBucketName(),
                         pluginConfiguration.getAccessKey(),
                         pluginConfiguration.getSecretKey()
                 );
@@ -65,7 +65,7 @@ public class EventFactory {
         } else if (message instanceof Modify) {
             if (pluginConfiguration.isModifyEnabled()) {
                 return new ModifyEvent(message,
-                        pluginConfiguration.getBucket(),
+                        pluginConfiguration.getBucketName(),
                         pluginConfiguration.getAccessKey(),
                         pluginConfiguration.getSecretKey()
                 );

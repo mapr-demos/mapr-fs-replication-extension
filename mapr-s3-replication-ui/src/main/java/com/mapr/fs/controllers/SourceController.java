@@ -1,6 +1,7 @@
 package com.mapr.fs.controllers;
 
-import com.mapr.fs.dao.SourceDAO;
+import com.mapr.fs.dao.S3PluginDao;
+import com.mapr.fs.dao.dto.PluginConfigurationDTO;
 import com.mapr.fs.dao.dto.SourceDTO;
 import org.apache.log4j.Logger;
 import org.springframework.http.MediaType;
@@ -28,14 +29,11 @@ public class SourceController {
             @RequestParam("modifying") Boolean modifying,
             @RequestParam("moving") Boolean moving
     ) throws IOException {
-        log.info("bucket: " + bucket);
-        log.info("volume: " + volume);
-        log.info("path: " + path);
-        log.info("creating: " + creating);
-        log.info("deleting: " + deleting);
-        log.info("modifying: " + modifying);
-        log.info("moving: " + moving);
-        new SourceDAO().put(volume, path, bucket, creating, deleting, modifying, moving);
+
+        PluginConfigurationDTO configuration =
+                new PluginConfigurationDTO(volume, path, creating, deleting, modifying, moving);
+
+        new S3PluginDao().putVolumeInBucket(bucket, configuration);
         return ResponseEntity.ok().build();
     }
 
@@ -48,14 +46,14 @@ public class SourceController {
 
         log.info(bucket);
 
-        return ResponseEntity.ok(new SourceDAO().get(bucket));
+        return ResponseEntity.ok(new S3PluginDao().get(bucket));
     }
 
     @RequestMapping(value = "/sources", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getSources() throws IOException {
         Map<String, List<SourceDTO>> result = new HashMap<>();
-        result.put("sources", new SourceDAO().getAll());
+        result.put("sources", new S3PluginDao().getAll());
         return ResponseEntity.ok(result);
     }
 
@@ -69,7 +67,7 @@ public class SourceController {
         log.info("bucket: " + bucket);
         log.info("volume: " + volume);
 
-        new SourceDAO().deleteVolume(bucket, volume, path);
+        new S3PluginDao().deleteVolume(bucket, volume);
         return ResponseEntity.ok().build();
     }
 }

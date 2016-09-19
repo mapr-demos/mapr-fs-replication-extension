@@ -18,8 +18,12 @@
         <repository>
             <id>mapr-releases</id>
             <url>http://repository.mapr.com/maven/</url>
-            <snapshots><enabled>true</enabled></snapshots>
-            <releases><enabled>true</enabled></releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
         </repository>
     </repositories>
 
@@ -45,11 +49,11 @@
 
     <modules>
         <module>common</module>
-        <module>consumer</module>
         <module>monitor</module>
+        <module>consumer</module>
+        <module>maprfs-s3-replication</module>
         <module>mapr-consumer-fs-ui</module>
         <module>mapr-monitor-fs-ui</module>
-        <module>maprfs-s3-replication</module>
         <module>mapr-s3-replication-ui</module>
     </modules>
 
