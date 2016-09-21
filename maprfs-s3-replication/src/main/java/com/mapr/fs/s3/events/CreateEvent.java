@@ -24,7 +24,7 @@ public class CreateEvent extends S3Event {
         if (!createMessage.isDirectory()) {
 
             log.info("send file to S3");
-            this.sendFile(bucket, path, createMessage.getName());
+            this.sendFile(bucket, path);
 
 
             log.info("File created: " + filePath);

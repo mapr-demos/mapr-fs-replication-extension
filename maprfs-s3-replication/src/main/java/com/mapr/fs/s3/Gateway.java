@@ -10,7 +10,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -46,7 +46,7 @@ public class Gateway {
 
             consumer = new KafkaConsumer<>(properties);
             log.info("Subscribing to the topic " + config.getTopicName(topic));
-            consumer.subscribe(Arrays.asList(config.getTopicName(topic)));
+            consumer.subscribe(Collections.singletonList(config.getTopicName(topic)));
             while (true) {
                 if (!running.containsKey(pluginConfiguration.getBucketName() + volumeName)) {
                     log.info("In " + pluginConfiguration.getBucketName() + "bucket stopped consuming through => " + volumeName);
@@ -56,7 +56,9 @@ public class Gateway {
                 for (ConsumerRecord<String, String> record : records) {
                     log.info(volumeName + ": " + record);
                     Event event = factory.parseEvent(record.value());
-                    event.execute(path);
+                    if (event != null) {
+                        event.execute(path);
+                    }
                 }
                 consumer.commitSync();
             }

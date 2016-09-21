@@ -20,24 +20,20 @@ import java.nio.file.Path;
 
 public abstract class S3Event implements Event {
 
-    protected final Logger log = Logger.getLogger(getClass());
-    protected Message message;
-    protected String bucket;
+    final Logger log = Logger.getLogger(getClass());
+    Message message;
+    String bucket;
 
     private AmazonS3 s3client;
-    private String accessKey;
-    private String secretKey;
 
     public S3Event(Message message, String bucket, String accessKey, String secretKey) {
         this.message = message;
         this.bucket = bucket;
-        this.accessKey = accessKey;
-        this.secretKey = secretKey;
         AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
         this.s3client = new AmazonS3Client(credentials);
     }
 
-    protected void sendFile(String bucket, Path path, String object) {
+    protected void sendFile(String bucket, Path path) {
         try {
             String pathToFile = path.toString();
 
@@ -50,25 +46,11 @@ public abstract class S3Event implements Event {
 
             s3client.putObject(new PutObjectRequest(bucket, pathToFile, file));
         } catch (AmazonServiceException ase) {
-            log.info("Caught an AmazonServiceException, which " +
-                    "means your request made it " +
-                    "to Amazon S3, but was rejected with an error response" +
-                    " for some reason.");
-            log.info("Error Message:    " + ase.getMessage());
-            log.info("HTTP Status Code: " + ase.getStatusCode());
-            log.info("AWS Error Code:   " + ase.getErrorCode());
-            log.info("Error Type:       " + ase.getErrorType());
-            log.info("Request ID:       " + ase.getRequestId());
+            logAmazonServerExceptionInfo(ase);
         } catch (AmazonClientException ace) {
-            log.info("Caught an AmazonClientException, which " +
-                    "means the client encountered " +
-                    "an internal error while trying to " +
-                    "communicate with S3, " +
-                    "such as not being able to access the network.");
-            log.info("Error Message: " + ace.getMessage());
+            logAmazonClientExceptionInfo(ace);
         }
     }
-
 
     protected void createFolder(String bucket, String folder) {
         try {
@@ -87,22 +69,9 @@ public abstract class S3Event implements Event {
             s3client.putObject(putObjectRequest);
 
         } catch (AmazonServiceException ase) {
-            log.info("Caught an AmazonServiceException, which " +
-                    "means your request made it " +
-                    "to Amazon S3, but was rejected with an error response" +
-                    " for some reason.");
-            log.info("Error Message:    " + ase.getMessage());
-            log.info("HTTP Status Code: " + ase.getStatusCode());
-            log.info("AWS Error Code:   " + ase.getErrorCode());
-            log.info("Error Type:       " + ase.getErrorType());
-            log.info("Request ID:       " + ase.getRequestId());
+            logAmazonServerExceptionInfo(ase);
         } catch (AmazonClientException ace) {
-            log.info("Caught an AmazonClientException, which " +
-                    "means the client encountered " +
-                    "an internal error while trying to " +
-                    "communicate with S3, " +
-                    "such as not being able to access the network.");
-            log.info("Error Message: " + ace.getMessage());
+            logAmazonClientExceptionInfo(ace);
         }
 
 
@@ -124,26 +93,31 @@ public abstract class S3Event implements Event {
 
 
         } catch (AmazonServiceException ase) {
-            log.info("Caught an AmazonServiceException, which " +
-                    "means your request made it " +
-                    "to Amazon S3, but was rejected with an error response" +
-                    " for some reason.");
-            log.info("Error Message:    " + ase.getMessage());
-            log.info("HTTP Status Code: " + ase.getStatusCode());
-            log.info("AWS Error Code:   " + ase.getErrorCode());
-            log.info("Error Type:       " + ase.getErrorType());
-            log.info("Request ID:       " + ase.getRequestId());
+            logAmazonServerExceptionInfo(ase);
         } catch (AmazonClientException ace) {
-            log.info("Caught an AmazonClientException, which " +
-                    "means the client encountered " +
-                    "an internal error while trying to " +
-                    "communicate with S3, " +
-                    "such as not being able to access the network.");
-            log.info("Error Message: " + ace.getMessage());
+            logAmazonClientExceptionInfo(ace);
         }
-
-
     }
 
+    private void logAmazonClientExceptionInfo(AmazonClientException ace) {
+        log.info("Caught an AmazonClientException, which " +
+                "means the client encountered " +
+                "an internal error while trying to " +
+                "communicate with S3, " +
+                "such as not being able to access the network.");
+        log.info("Error Message: " + ace.getMessage());
+    }
+
+    private void logAmazonServerExceptionInfo(AmazonServiceException ase) {
+        log.info("Caught an AmazonServiceException, which " +
+                "means your request made it " +
+                "to Amazon S3, but was rejected with an error response" +
+                " for some reason.");
+        log.info("Error Message:    " + ase.getMessage());
+        log.info("HTTP Status Code: " + ase.getStatusCode());
+        log.info("AWS Error Code:   " + ase.getErrorCode());
+        log.info("Error Type:       " + ase.getErrorType());
+        log.info("Request ID:       " + ase.getRequestId());
+    }
 
 }
