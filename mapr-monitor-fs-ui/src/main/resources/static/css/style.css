@@ -1,0 +1,35 @@
+* {
+    margin: 10px;
+}
+
+#control {
+    width: 35%;
+    min-width: 420px;
+}
+
+#vol_table {
+    width: 35%;
+    min-width: 420px;
+    border: 1px;
+}
+
+#add_btn {
+    display: flex;
+    justify-content: center;
+}
+
+#vol_name {
+    width: 35%;
+}
+
+#vol_path {
+    width: 45%;
+}
+
+#vol_monitor {
+    width: 20%;
+}
+
+.btn {
+    width: 90px;
+}

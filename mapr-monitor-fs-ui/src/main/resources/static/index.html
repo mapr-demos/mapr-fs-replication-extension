@@ -2,40 +2,47 @@
 <html>
 <head>
     <title>Monitoring</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
 
-<!-- Latest compiled and minified JavaScript -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
-    <style type="text/css">
-        * {
-            margin: 10px;
-        }
-    </style>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
 </head>
 <body>
-<div style="width: 50%;">
-    <table class="table table-striped" id='table'>
-    <thead>
-      <tr>
-        <th>Volume Name</th>
-        <th>Path</th>
-        <th>Monitoring</th>
-      </tr>
-    </thead>
-    <tbody id='table_body'>
-    </tbody>
-  </table>
+<div>
+    <div id="vol_table">
+        <table class="table table-striped" id='table'>
+            <thead>
+            <tr>
+                <th id="vol_name">Volume Name</th>
+                <th id="vol_path">Path</th>
+                <th id="vol_monitor">Monitoring</th>
+            </tr>
+            </thead>
+            <tbody id='table_body'>
+            </tbody>
+        </table>
+    </div>
 
     <div id='control'>
-        <form id="volume_form">
-            <input type="text" name="volume_name" width="25%" placeholder="Add volume name here" required = "True">
-            <input type="text" name="volume_path" width="25%" placeholder="Add volume path here" required = "True">
-            <button  type="submit">Add</button>
+        <form id="volume_form" class="form-group">
+            <div id="volume_input">
+                <input type="text" class="form-control" name="volume_name" width="25%"
+                       placeholder="Add volume name here" required="True">
+            </div>
+            <div id="path_input">
+                <input type="text" class="form-control" name="volume_path" width="25%"
+                       placeholder="Add volume path here" required="True">
+            </div>
+            <div id="add_btn">
+                <button class="btn btn-primary" type="submit">Add!</button>
+            </div>
         </form>
     </div>
 </div>
