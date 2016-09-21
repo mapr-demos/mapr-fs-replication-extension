@@ -1,0 +1,28 @@
+* {
+    margin: 10px;
+}
+
+.source-controls {
+    display: flex;
+    justify-content: center;
+}
+
+.form_element {
+    display: flex;
+}
+
+.form_label {
+    margin: 0;
+    flex-basis: 200px;
+}
+
+.form_checkbox {
+    margin-left: 60px;
+    justify-content: flex-start;
+}
+
+#source-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}

@@ -2,16 +2,16 @@ var API_URL = ''
 var sourceID = 0;
 function fetchSources() {
     $('#add_new_src_btn').off('click');
-    fetch(API_URL + '/sources').then(function(response) {
+    fetch(API_URL + '/sources').then(function (response) {
         $('#add_new_src_btn').on('click', addNewSourceHandler);
         return response.json();
-    }).then(function(data) {
+    }).then(function (data) {
         sourceID = 0;
         var parent = document.getElementById('source-list');
         removeAllChild(parent);
         var result = [];
 
-        data.sources.forEach(function(rawSource) {
+        data.sources.forEach(function (rawSource) {
             var volume = rawSource.volumes;
             for (var key in volume) {
                 if (rawSource.volumes.hasOwnProperty(key)) {
@@ -30,7 +30,7 @@ function fetchSources() {
             }
         });
 
-        result.forEach(function(source) {
+        result.forEach(function (source) {
             popElement(parent, createSourceForm(parent, source));
         });
     });
@@ -64,17 +64,17 @@ function createElement(type, props, child) {
         elem[prop] = props[prop];
     }
     var _child = child || [];
-    _child.forEach(function(children) {
+    _child.forEach(function (children) {
         elem.appendChild(children);
     });
     return elem;
 }
-$(document).ready(function(){
+$(document).ready(function () {
     fetchSources();
 });
 
 function removeAllChild(elem) {
-    while(elem.firstChild) {
+    while (elem.firstChild) {
         elem.removeChild(elem.firstChild);
     }
 }
@@ -91,62 +91,66 @@ function createSourceForm(parent, source) {
 // --------------------- Text Inputs ---------------------
 
     child.push(createElement('div',
-                    {className: 'form_element'},
-                    [createFormLabel('Volume: '), createVolumeInput(source)]));
+        {className: 'form_element'},
+        [createFormLabel('Volume: '), createVolumeInput(source)]));
     child.push(createElement('div',
-                    {className: 'form_element'},
-                    [createFormLabel('Bucket: '), createBucketInput(source)]));
+        {className: 'form_element'},
+        [createFormLabel('Bucket: '), createBucketInput(source)]));
     child.push(createElement('div',
-                        {className: 'form_element'},
-                        [createFormLabel('Path: '), createPathInput(source)]));
+        {className: 'form_element'},
+        [createFormLabel('Path: '), createPathInput(source)]));
 
 
 // --------------------- Checkboxes ---------------------
 
 
     child.push(createElement('div',
-                    {className: 'form_element form_checkbox'},
-                    [createCheckbox(source, 'creating', isNewSource), createFormLabel('Create File')]));
+        {className: 'form_element form_checkbox'},
+        [createCheckbox(source, 'creating', isNewSource), createFormLabel('Create File')]));
     child.push(createElement('div',
-                    {className: 'form_element form_checkbox'},
-                    [createCheckbox(source, 'deleting', isNewSource), createFormLabel('Delete File')]));
+        {className: 'form_element form_checkbox'},
+        [createCheckbox(source, 'deleting', isNewSource), createFormLabel('Delete File')]));
     child.push(createElement('div',
-                    {className: 'form_element form_checkbox'},
-                    [createCheckbox(source, 'modifying', isNewSource), createFormLabel('Modify File')]));
+        {className: 'form_element form_checkbox'},
+        [createCheckbox(source, 'modifying', isNewSource), createFormLabel('Modify File')]));
     child.push(createElement('div',
-                    {className: 'form_element form_checkbox'},
-                    [createCheckbox(source, 'moving', isNewSource), createFormLabel('Rename File')]));
+        {className: 'form_element form_checkbox'},
+        [createCheckbox(source, 'moving', isNewSource), createFormLabel('Rename File')]));
 
 // --------------------- Buttons ---------------------
 
     if (!!source.bucketName && !!source.volumeName && !!source.path) {
 
         child.push(createElement('div',
-                        {className: 'btn btn-primary',
-                        style: {
-                            marginBottom: '2px',
-                        },
-                        onclick: function () {
-                                         deleteSource(source);
-                                         parent.removeChild(document.getElementById(id));
-                         }},
-                        [document.createTextNode('Remove')]));
+            {
+                className: 'btn btn-primary',
+                style: {
+                    marginBottom: '2px',
+                },
+                onclick: function () {
+                    deleteSource(source);
+                    parent.removeChild(document.getElementById(id));
+                }
+            },
+            [document.createTextNode('Remove')]));
     } else {
 
         child.push(createElement('div',
-                        {className: 'btn btn-primary',
-                        style: {
-                            marginBottom: '2px',
-                        },
-                        onclick: function () {
-                                         if (source.volumeName && source.bucketName) {
-                                             sendData(source);
-                                             window.location.reload();
-                                         } else {
-                                            alert('Enter bucket, volume and path !');
-                                         }
-                         }},
-                        [document.createTextNode('Add new Source')]));
+            {
+                className: 'btn btn-primary',
+                style: {
+                    marginBottom: '2px',
+                },
+                onclick: function () {
+                    if (source.volumeName && source.bucketName) {
+                        sendData(source);
+                        window.location.reload();
+                    } else {
+                        alert('Enter bucket, volume and path !');
+                    }
+                }
+            },
+            [document.createTextNode('Add new Source')]));
     }
 
     return createElement('div', {
@@ -194,7 +198,7 @@ function createVolumeInput(source) {
         value: source.volumeName,
         readOnly: !!source.volumeName,
         placeholder: 'Enter Volume Name',
-        onchange: function(e) {
+        onchange: function (e) {
             source.volumeName = e.target.value;
         }
     };
@@ -203,11 +207,11 @@ function createVolumeInput(source) {
 
 function createBucketInput(source) {
     var props = {
-        id:'bucket_input_' + source.sourceID,
+        id: 'bucket_input_' + source.sourceID,
         value: source.bucketName,
         readOnly: !!source.bucketName,
         placeholder: 'Enter Bucket Name',
-        onchange: function(e) {
+        onchange: function (e) {
             source.bucketName = e.target.value;
         }
     };
@@ -216,11 +220,11 @@ function createBucketInput(source) {
 
 function createPathInput(source) {
     var props = {
-        id:'path_input_' + source.sourceID,
+        id: 'path_input_' + source.sourceID,
         value: source.path,
         readOnly: !!source.path,
         placeholder: 'Enter Path',
-        onchange: function(e) {
+        onchange: function (e) {
             source.path = e.target.value;
         }
     };
@@ -228,7 +232,7 @@ function createPathInput(source) {
 }
 
 function checkBoxHandlerFactory(source, fieldName, isNewSource) {
-    return function() {
+    return function () {
         source[fieldName] = !source[fieldName];
         if (!isNewSource) {
             sendData(source);
