@@ -5,11 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.time.LocalDateTime;
-
 
 @Data
-@EqualsAndHashCode(exclude = {"lastEvent","dateTime"})
+@EqualsAndHashCode(exclude = {"lastEvent", "dateTime"})
 public class FileStatusDto {
 
     private String filename;
@@ -18,12 +16,10 @@ public class FileStatusDto {
 
 
     @JsonCreator
-    public FileStatusDto(@JsonProperty("filename") String filename, @JsonProperty("lastEvent") String lastEvent,@JsonProperty("dateTime") String dateTime) {
+    public FileStatusDto(@JsonProperty("filename") String filename, @JsonProperty("lastEvent") String lastEvent, @JsonProperty("dateTime") String dateTime) {
         this.filename = filename;
         this.lastEvent = lastEvent;
         this.dateTime = dateTime;
     }
 
-    public FileStatusDto() {
-    }
 }
