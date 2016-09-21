@@ -1,0 +1,53 @@
+.cluster {
+    margin: 10px;
+}
+
+.clusters_container {
+    margin-left: 20px;
+}
+
+#cluster_name_inp {
+    width: 10%;
+    min-width: 150px;
+    padding: 5px;
+}
+
+#add_cluster_btn {
+    width: 10%;
+    min-width: 150px;
+    padding: 5px;
+}
+
+#cluster_list {
+    padding: 15px;
+}
+
+#control_cluster {
+    margin-left: 35px;
+    width: 550px;
+}
+
+.cluster_input_form {
+    margin-left: 35px;
+    width: 550px;
+}
+
+.form-control {
+    width: 35%;
+}
+
+#volume_name_input {
+    padding: 10px;
+}
+
+#volume_path_input {
+    padding: 10px;
+}
+
+#add_btn {
+    padding: 10px;
+}
+
+#control {
+    padding: 5px;
+}

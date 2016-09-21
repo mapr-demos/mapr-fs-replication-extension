@@ -1,0 +1,11 @@
+* {
+    margin: 10px;
+}
+
+#table {
+    width: 65%;
+}
+
+#select_picker {
+    width: 300px;
+}
