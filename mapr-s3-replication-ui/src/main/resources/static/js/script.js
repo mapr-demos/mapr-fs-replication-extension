@@ -144,7 +144,9 @@ function createSourceForm(parent, source) {
                 onclick: function () {
                     if (source.volumeName && source.bucketName) {
                         sendData(source);
-                        window.location.reload();
+                        setTimeout(function(){
+                            window.location.reload();
+                        }, 100);
                     } else {
                         alert('Enter bucket, volume and path !');
                     }
