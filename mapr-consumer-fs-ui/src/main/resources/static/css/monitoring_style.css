@@ -6,6 +6,14 @@
     width: 65%;
 }
 
-#select_picker {
+.bs-caret {
+    margin: 0;
+}
+
+.dropdown-menu {
     width: 300px;
+}
+
+.btn-default {
+    width: 300px !important;
 }

@@ -51,3 +51,7 @@
 #control {
     padding: 5px;
 }
+
+.cluster_volumes {
+    margin: 15px;
+}

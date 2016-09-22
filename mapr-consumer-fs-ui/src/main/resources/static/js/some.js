@@ -16,20 +16,22 @@ function addCluster(cluster) {
     }
     var result = template;
     result += `
-  <div id='${cluster_id}_list'></div>
-      <div id='control-${cluster_id}' aria-expanded='${cluster.state}' >
-          <form id="cluster_${cluster_id}_form" class="cluster_input_form">
-              <input type="hidden" name="cluster_name" value="${cluster.cluster_name}">
-              <div id="volume_name_input">
-                <input class="form-control" type="text" name="volume_name" placeholder="Add volume name here" required = "True">
-              </div>
-              <div id="volume_path_input">
-                <input class="form-control" type="text" name="path" width="50%" placeholder="Add volume path here" required = "True">
-              </div>
-              <div id="add_btn">
-                <input class="btn btn-primary" type="submit" value="Add">
-              </div>
-          </form>
+    <div class="cluster_volumes">
+      <div id='${cluster_id}_list'></div>
+          <div id='control-${cluster_id}' aria-expanded='${cluster.state}' >
+              <form id="cluster_${cluster_id}_form" class="cluster_input_form">
+                  <input type="hidden" name="cluster_name" value="${cluster.cluster_name}">
+                  <div id="volume_name_input">
+                    <input class="form-control" type="text" name="volume_name" placeholder="Add volume name here" required = "True">
+                  </div>
+                  <div id="volume_path_input">
+                    <input class="form-control" type="text" name="path" width="50%" placeholder="Add volume path here" required = "True">
+                  </div>
+                  <div id="add_btn">
+                    <input class="btn btn-primary" type="submit" value="Add">
+                  </div>
+              </form>
+          </div>
       </div>
   </div><br/>`;
 
