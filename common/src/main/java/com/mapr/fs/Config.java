@@ -1,15 +1,15 @@
 package com.mapr.fs;
 
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+@Slf4j
 public class Config {
 
-    private static final Logger log = Logger.getLogger(Config.class);
 
 
     private static String configPath;

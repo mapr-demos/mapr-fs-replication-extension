@@ -2,7 +2,7 @@ package com.mapr.fs.controllers;
 
 import com.mapr.fs.dao.ClusterDAO;
 import com.mapr.fs.dao.dto.ClusterDTO;
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 public class ClusterController {
 
@@ -31,7 +32,6 @@ public class ClusterController {
         return ResponseEntity.ok().build();
     }
 
-    private static final Logger log = Logger.getLogger(ClusterController.class);
 
     @RequestMapping(value = "/cluster/{cluster_name}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getClusterInfo(

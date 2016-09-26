@@ -2,14 +2,15 @@ package com.mapr.fs.events;
 
 import com.mapr.fs.dao.ConsumerDAO;
 import com.mapr.fs.messages.Delete;
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 
+@Slf4j
 public class DeleteEvent implements Event {
-    private static final Logger log = Logger.getLogger(DeleteEvent.class);
+
     private Delete message;
     private ConsumerDAO dao;
 
@@ -30,7 +31,7 @@ public class DeleteEvent implements Event {
             return;
         }
         dao.remove(Paths.get(filePath));
-        log.info(dao.get(Paths.get(filePath)));
+        log.info(dao.get(Paths.get(filePath)).toString());
         log.info("File/directory deleted: " + filePath);
     }
 

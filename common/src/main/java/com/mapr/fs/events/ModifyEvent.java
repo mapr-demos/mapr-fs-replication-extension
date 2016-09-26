@@ -2,8 +2,8 @@ package com.mapr.fs.events;
 
 import com.mapr.fs.dao.ConsumerDAO;
 import com.mapr.fs.messages.Modify;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,8 +13,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Slf4j
 public class ModifyEvent implements Event {
-    private static final Logger log = Logger.getLogger(ModifyEvent.class);
+
     private Modify message;
     private ConsumerDAO dao;
 
@@ -43,7 +44,7 @@ public class ModifyEvent implements Event {
         file.close();
 
         dao.put(path);
-        log.info(dao.get(path));
+        log.info(dao.get(path).toString());
     }
 
     private void truncate(String filePath) throws IOException {

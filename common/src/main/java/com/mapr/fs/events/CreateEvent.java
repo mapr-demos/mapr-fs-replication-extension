@@ -2,15 +2,15 @@ package com.mapr.fs.events;
 
 import com.mapr.fs.dao.ConsumerDAO;
 import com.mapr.fs.messages.Create;
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Slf4j
 public class CreateEvent implements Event {
-    private static final Logger log = Logger.getLogger(CreateEvent.class);
 
     private Create message;
     private ConsumerDAO dao;

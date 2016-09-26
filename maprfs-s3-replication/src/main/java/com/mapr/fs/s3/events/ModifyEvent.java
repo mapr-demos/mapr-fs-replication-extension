@@ -2,11 +2,13 @@ package com.mapr.fs.s3.events;
 
 import com.mapr.fs.messages.Message;
 import com.mapr.fs.messages.Modify;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Slf4j
 public class ModifyEvent extends S3Event {
 
     public ModifyEvent(Message message, String bucket, String accessKey, String secretKey) {

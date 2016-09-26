@@ -3,6 +3,7 @@ package com.mapr.fs.controllers;
 import com.mapr.fs.dao.VolumeStatusDao;
 import com.mapr.fs.dao.dto.FileStatusDto;
 import com.mapr.fs.dao.dto.VolumeStatusDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-
+@Slf4j
 @RestController
 public class StatusPageController {
 

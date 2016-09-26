@@ -3,54 +3,32 @@ package com.mapr.fs.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
 import com.mapr.fs.*;
 import com.mapr.fs.dao.MonitorDAO;
-
-import com.mapr.fs.messages.Create;
-import com.mapr.fs.messages.Delete;
-import com.mapr.fs.messages.RenameTo;
-import com.mapr.fs.messages.RenameFrom;
-import com.mapr.fs.messages.Modify;
-
 import com.mapr.fs.dao.VolumeDAO;
 import com.mapr.fs.dao.dto.MonitorDTO;
-import org.apache.commons.cli.*;
+import com.mapr.fs.messages.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.cli.ParseException;
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
-
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchService;
-import java.nio.file.WatchKey;
-import java.nio.file.Files;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileSystems;
-import java.nio.file.WatchEvent;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.LinkOption;
-import java.nio.file.Paths;
-
 import java.util.*;
-
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.*;
 
 /**
  * Watches a directory for changes and writes those changes as appropriate
  * to a MapR stream.
  */
+@Slf4j
 public class Monitor {
 
-    private static final Logger log = Logger.getLogger(Monitor.class);
     private final int MAX_MODIFY_SIZE = 5;
     private final int MAX_OFFSETS_SIZE = 20_000;
 
@@ -190,7 +168,7 @@ public class Monitor {
                     // TODO how is this sleep justified? Shouldn't we wake up as soon as the next timeout will expire?
                     Thread.sleep(1000);
                 } catch (IOException | InterruptedException e) {
-                    log.error(e);
+                    log.error(e.toString());
                 }
             }
         }).start();
@@ -389,7 +367,7 @@ public class Monitor {
 
             startMonitoring(volumes, dao);
         } catch (Exception ex) {
-            log.error(ex);
+            log.error(ex.toString());
         }
     }
 

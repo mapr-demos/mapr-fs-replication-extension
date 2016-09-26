@@ -3,10 +3,10 @@ package com.mapr.fs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,8 +16,8 @@ import java.util.Properties;
 /**
  * Like a KafkaProducer, but includes magical conversion of POJO's to JSON when sending
  */
+@Slf4j
 public class JsonProducer {
-    private static final Logger log = Logger.getLogger(JsonProducer.class);
 
     protected final Producer<String, String> delegate;
     private final ObjectMapper mapper = com.mapr.fs.Util.getObjectMapper();

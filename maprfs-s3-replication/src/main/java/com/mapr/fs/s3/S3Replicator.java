@@ -5,8 +5,8 @@ import com.mapr.fs.PluginConfiguration;
 import com.mapr.fs.Util;
 import com.mapr.fs.dao.S3PluginDao;
 import com.mapr.fs.dao.dto.SourceDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -16,15 +16,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Slf4j
 public class S3Replicator {
 
-    private static final Logger log = Logger.getLogger(S3Replicator.class);
 
     public static void main(String[] args) throws Exception {
         // Load configuration for S3 : bucket, volumes, ....
         // TODO : move from configuration to DB+API
-        Util.setConfigPath(args);
         BasicConfigurator.configure();
+        Util.setConfigPath(args);
         Config conf = new Config("s3.");
         Properties properties = conf.getProperties();
 

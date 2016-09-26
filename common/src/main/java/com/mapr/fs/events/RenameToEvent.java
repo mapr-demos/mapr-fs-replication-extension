@@ -2,15 +2,15 @@ package com.mapr.fs.events;
 
 import com.mapr.fs.dao.ConsumerDAO;
 import com.mapr.fs.messages.RenameTo;
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 
+@Slf4j
 public class RenameToEvent implements Event {
 
-    private static final Logger log = Logger.getLogger(RenameToEvent.class);
     private RenameTo message;
     private ConsumerDAO dao;
 
@@ -34,7 +34,7 @@ public class RenameToEvent implements Event {
             log.info("Rename successful: " + oldFilePath + " -> " + newFilePath);
 
             dao.put(Paths.get(newFilePath));
-            log.info(dao.get(Paths.get(newFilePath)));
+            log.info(dao.get(Paths.get(newFilePath)).toString());
         }else{
             log.error("Rename failed: " + oldFilePath + " -> " + newFilePath);
         }

@@ -5,14 +5,13 @@ import com.mapr.fs.Util;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.messages.*;
 import com.mapr.fs.PluginConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.Map;
 
+@Slf4j
 public class EventFactory {
-    private static final Logger log = LoggerFactory.getLogger(EventFactory.class);
 
     private final ObjectMapper mapper = Util.getObjectMapper();
     private final PluginConfiguration pluginConfiguration;

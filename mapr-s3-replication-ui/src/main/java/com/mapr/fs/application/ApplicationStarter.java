@@ -1,8 +1,9 @@
 package com.mapr.fs.application;
 
 import com.mapr.fs.Util;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.ParseException;
-import org.apache.log4j.Logger;
+import org.apache.log4j.BasicConfigurator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -10,18 +11,19 @@ import org.springframework.context.annotation.ComponentScan;
 
 import java.util.Arrays;
 
+@Slf4j
 @SpringBootApplication
 @ComponentScan("com.mapr.fs.*")
 public class ApplicationStarter {
 
-    private static final Logger log = Logger.getLogger(ApplicationStarter.class);
 
     public static void main(String[] args) throws ParseException {
+        BasicConfigurator.configure();
         try {
             Util.setConfigPath(args);
             start(args);
         } catch (Exception ex) {
-            log.error(ex);
+            log.error(ex.toString());
         }
     }
 

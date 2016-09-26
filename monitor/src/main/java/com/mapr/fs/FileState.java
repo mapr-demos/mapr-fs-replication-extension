@@ -2,9 +2,9 @@ package com.mapr.fs;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.htrace.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -19,8 +19,9 @@ import java.util.List;
 /**
  * Records the state of a file, including name, FID, permissions and content.
  */
+@Slf4j
 public class FileState {
-    private final Logger log = Logger.getLogger(this.getClass());
+
     public static final int BLOCK_SIZE = 8192;
     private long size;
     private List<Long> hashes = new ArrayList<>();

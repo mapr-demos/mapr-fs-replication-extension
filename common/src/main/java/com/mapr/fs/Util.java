@@ -2,13 +2,13 @@ package com.mapr.fs;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
-import org.apache.log4j.Logger;
 
 import java.io.File;
 
+@Slf4j
 public class Util {
-    private static final Logger log = Logger.getLogger(Util.class);
 
     public static ObjectMapper getObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();

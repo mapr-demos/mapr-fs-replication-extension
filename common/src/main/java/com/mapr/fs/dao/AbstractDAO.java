@@ -4,10 +4,10 @@ package com.mapr.fs.dao;
 import com.mapr.db.MapRDB;
 import com.mapr.db.Table;
 import com.mapr.fs.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,9 +16,8 @@ import java.nio.file.FileSystems;
 /**
  * This class is used as a base for all DAO that needs access to MapR-DB
  */
+@Slf4j
 public class AbstractDAO {
-
-    protected final Logger log = Logger.getLogger(getClass());
 
     private String fullTableName; // full path to the table
     private String type; // type of table that define the parent folder

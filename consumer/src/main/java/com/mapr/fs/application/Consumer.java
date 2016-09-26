@@ -7,11 +7,11 @@ import com.mapr.fs.dao.dto.FileStatusDto;
 import com.mapr.fs.dao.dto.VolumeDTO;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.events.EventFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,9 +19,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 
+@Slf4j
 public class Consumer {
 
-    private static final Logger log = Logger.getLogger(Consumer.class);
 
     public static class Gateway {
 
@@ -76,7 +76,7 @@ public class Consumer {
                     consumer.commitSync();
                 }
             } catch (IOException e) {
-                log.error(e);
+                log.error(e.toString());
             } finally {
                 if (consumer != null) {
                     consumer.close();
@@ -96,7 +96,7 @@ public class Consumer {
 
             startConsuming(volumes, dao);
         } catch (Exception ex) {
-            log.error(ex);
+            log.error(ex.toString());
         }
     }
 

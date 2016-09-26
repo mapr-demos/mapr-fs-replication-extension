@@ -1,7 +1,7 @@
 package com.mapr.fs.controllers;
 
 import com.mapr.fs.dao.ClusterDAO;
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 import java.io.IOException;
 
+@Slf4j
 @RestController
 public class VolumeController {
-    private static final Logger log = Logger.getLogger(VolumeController.class);
 
     @RequestMapping(value = "/volumes/{cluster_name}", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -40,7 +40,7 @@ public class VolumeController {
         new ClusterDAO().put(cluster_name, volume_name, path, status);
         log.info(cluster_name);
         log.info(volume_name);
-        log.info(status);
+        log.info(status.toString());
         log.info(path);
         return ResponseEntity.ok().build();
     }
