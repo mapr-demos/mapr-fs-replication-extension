@@ -21,19 +21,16 @@ public class Gateway {
     private final PluginConfiguration pluginConfiguration;
     private final String topic;
     private final String volumeName;
-    private final String path;
     private final EventFactory factory;
     private ConcurrentHashMap running;
 
 
-    public Gateway(String volumeName, String path, ConcurrentHashMap running, PluginConfiguration pluginConfiguration) throws IOException {
+    public Gateway(String volumeName, ConcurrentHashMap running, PluginConfiguration pluginConfiguration) throws IOException {
         this.pluginConfiguration = pluginConfiguration;
         this.volumeName = volumeName;
         this.running = running;
         this.topic = Config.getMonitorTopic(volumeName);
-        this.path = path;
         this.factory = new EventFactory(pluginConfiguration);
-        log.info(volumeName + " gateway configured with path " + path);
     }
 
     protected void processEvents() {
@@ -49,7 +46,7 @@ public class Gateway {
             consumer.subscribe(Collections.singletonList(config.getTopicName(topic)));
             while (true) {
                 if (!running.containsKey(pluginConfiguration.getBucketName() + volumeName)) {
-                    log.info("In " + pluginConfiguration.getBucketName() + "bucket stopped consuming through => " + volumeName);
+                    log.info("In " + pluginConfiguration.getBucketName() + " bucket stopped consuming through => " + volumeName);
                     break;
                 }
                 ConsumerRecords<String, String> records = consumer.poll(200);
@@ -57,7 +54,7 @@ public class Gateway {
                     log.info(volumeName + ": " + record);
                     Event event = factory.parseEvent(record.value());
                     if (event != null) {
-                        event.execute(path);
+                        event.execute(record.key());
                     }
                 }
                 consumer.commitSync();

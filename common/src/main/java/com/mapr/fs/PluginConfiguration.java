@@ -16,7 +16,6 @@ public class PluginConfiguration {
     private String accessKey;
     private String secretKey;
     private String volumeName;
-    private String volumePath;
     private String bucketName;
     private boolean createEnabled = false;
     private boolean deleteEnabled = false;

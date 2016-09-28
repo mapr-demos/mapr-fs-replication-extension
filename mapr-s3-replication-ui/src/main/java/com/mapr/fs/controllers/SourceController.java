@@ -23,7 +23,6 @@ public class SourceController {
     public ResponseEntity addSource(
             @RequestParam("bucket") String bucket,
             @RequestParam("volume_name") String volume,
-            @RequestParam("path") String path,
             @RequestParam("creating") Boolean creating,
             @RequestParam("deleting") Boolean deleting,
             @RequestParam("modifying") Boolean modifying,
@@ -31,7 +30,7 @@ public class SourceController {
     ) throws IOException {
 
         PluginConfigurationDTO configuration =
-                new PluginConfigurationDTO(volume, path, creating, deleting, modifying, moving);
+                new PluginConfigurationDTO(volume, creating, deleting, modifying, moving);
 
         new S3PluginDao().putVolumeInBucket(bucket, configuration);
         return ResponseEntity.ok().build();
@@ -61,7 +60,6 @@ public class SourceController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity deleteSource(
             @RequestParam("bucket") String bucket,
-            @RequestParam("path") String path,
             @RequestParam("volume_name") String volume
     ) throws IOException {
         log.info("bucket: " + bucket);

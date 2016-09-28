@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 public class PluginConfigurationDTO {
 
     private String volumeName;
-    private String volumePath;
     private boolean createEnabled = false;
     private boolean deleteEnabled = false;
     private boolean modifyEnabled = false;

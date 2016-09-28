@@ -19,7 +19,6 @@ function fetchSources() {
                         sourceID: sourceID++,
                         bucketName: rawSource._id,
                         volumeName: volume[key].volumeName,
-                        path: volume[key].volumePath,
                         creating: volume[key].createEnabled,
                         deleting: volume[key].deleteEnabled,
                         moving: volume[key].renameEnabled,
@@ -41,7 +40,6 @@ function addNewSourceHandler() {
     var source = {
         sourceID: sourceID++,
         bucketName: '',
-        path: '',
         creating: true,
         modifying: true,
         moving: true,
@@ -96,9 +94,6 @@ function createSourceForm(parent, source) {
     child.push(createElement('div',
         {className: 'form_element'},
         [createFormLabel('Bucket: '), createBucketInput(source)]));
-    child.push(createElement('div',
-        {className: 'form_element'},
-        [createFormLabel('Path: '), createPathInput(source)]));
 
 
 // --------------------- Checkboxes ---------------------
@@ -119,7 +114,7 @@ function createSourceForm(parent, source) {
 
 // --------------------- Buttons ---------------------
 
-    if (!!source.bucketName && !!source.volumeName && !!source.path) {
+    if (!!source.bucketName && !!source.volumeName) {
 
         child.push(createElement('div',
             {
@@ -148,7 +143,7 @@ function createSourceForm(parent, source) {
                             window.location.reload();
                         }, 100);
                     } else {
-                        alert('Enter bucket, volume and path !');
+                        alert('Enter bucket and volume !');
                     }
                 }
             },
@@ -170,22 +165,19 @@ function createSourceForm(parent, source) {
 function deleteSource(source) {
     var volume_name = document.getElementById('volume_input_' + source.sourceID).value;
     var bucket_name = document.getElementById('bucket_input_' + source.sourceID).value;
-    var path_name = document.getElementById('path_input_' + source.sourceID).value;
 
     $.post(`${API_URL}/sources/del`, {
         volume_name: volume_name,
         bucket: bucket_name,
-        path: path_name
     });
 }
 
 function sendData(source) {
     console.log(source);
-    if (source.volumeName && source.bucketName && source.path) {
+    if (source.volumeName && source.bucketName) {
         $.post(`${API_URL}/sources`, {
             volume_name: source.volumeName,
             bucket: source.bucketName,
-            path: source.path,
             creating: source.creating,
             deleting: source.deleting,
             modifying: source.modifying,
@@ -215,19 +207,6 @@ function createBucketInput(source) {
         placeholder: 'Enter Bucket Name',
         onchange: function (e) {
             source.bucketName = e.target.value;
-        }
-    };
-    return createElement('input', props);
-}
-
-function createPathInput(source) {
-    var props = {
-        id: 'path_input_' + source.sourceID,
-        value: source.path,
-        readOnly: !!source.path,
-        placeholder: 'Enter Path',
-        onchange: function (e) {
-            source.path = e.target.value;
         }
     };
     return createElement('input', props);

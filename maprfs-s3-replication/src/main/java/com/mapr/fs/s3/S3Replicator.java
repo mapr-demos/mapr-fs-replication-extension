@@ -51,12 +51,12 @@ public class S3Replicator {
                     PluginConfiguration pluginConfiguration = getPluginConfiguration(accessKey, secretKey, dto, volumeName);
 
                     if (!running.containsKey(bucketVolumeKey)) {
-                        runThreadForConsuming(service, running, dto, volumeName, pluginConfiguration);
+                        runThreadForConsuming(service, running, volumeName, pluginConfiguration);
                         running.put(bucketVolumeKey, pluginConfiguration);
                     } else {
                         if (!running.get(bucketVolumeKey).equals(pluginConfiguration)) {
                             running.remove(bucketVolumeKey);
-                            runThreadForConsuming(service, running, dto, volumeName, pluginConfiguration);
+                            runThreadForConsuming(service, running, volumeName, pluginConfiguration);
                         }
                     }
                 }
@@ -76,11 +76,10 @@ public class S3Replicator {
     }
 
     private static void runThreadForConsuming(ExecutorService service, ConcurrentHashMap<String, PluginConfiguration> running,
-                                              SourceDTO dto, String volumeName, PluginConfiguration pluginConfiguration) {
+                                              String volumeName, PluginConfiguration pluginConfiguration) {
         service.submit(() -> {
             try {
-                new Gateway(volumeName,
-                        dto.getVolumes().get(volumeName).getVolumePath(), running, pluginConfiguration).processEvents();
+                new Gateway(volumeName, running, pluginConfiguration).processEvents();
             } catch (IOException e) {
                 log.error("Cannot create Gateway" + e.getMessage());
             }
@@ -97,8 +96,6 @@ public class S3Replicator {
         pluginConfiguration.setSecretKey(secretKey);
         pluginConfiguration.setVolumeName(volumeName);
         pluginConfiguration.setBucketName(dto.getBucket());
-        pluginConfiguration.setVolumePath(dto.getVolumes().get(volumeName).getVolumePath());
-
         pluginConfiguration.setCreateEnabled(dto.getVolumes().get(volumeName).isCreateEnabled());
         pluginConfiguration.setDeleteEnabled(dto.getVolumes().get(volumeName).isDeleteEnabled());
         pluginConfiguration.setModifyEnabled(dto.getVolumes().get(volumeName).isModifyEnabled());
