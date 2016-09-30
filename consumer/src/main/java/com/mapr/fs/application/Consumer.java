@@ -1,6 +1,7 @@
 package com.mapr.fs.application;
 
-import com.mapr.fs.*;
+import com.mapr.fs.Config;
+import com.mapr.fs.Util;
 import com.mapr.fs.dao.ClusterDAO;
 import com.mapr.fs.dao.VolumeStatusDao;
 import com.mapr.fs.dao.dto.FileStatusDto;
@@ -16,8 +17,12 @@ import org.apache.log4j.BasicConfigurator;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class Consumer {

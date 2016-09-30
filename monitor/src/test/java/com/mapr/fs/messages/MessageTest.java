@@ -22,7 +22,7 @@ public class MessageTest extends TestCase {
         List<Long> offsets = Lists.<Long>newArrayList(0L, 8192L, 16384L);
         List<String> content = Lists.<String>newArrayList("content1", "content2", "content3");
 
-        validate(new Modify(new File("/usr/foo").toPath(), 103L, offsets, content),
+        validate(new Modify(new File("/usr/foo").toPath(), 103L, offsets, content, true),
                 "\"type\":\"modify\",\"name\":\"/usr/foo\",\"fileSize\":103,\"changedBlocks\":[0,8192,16384],\"changedBlocksContent\":[\"content1\",\"content2\",\"content3\"]}");
     }
 

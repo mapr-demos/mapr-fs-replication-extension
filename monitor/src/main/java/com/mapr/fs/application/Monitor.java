@@ -278,10 +278,19 @@ public class Monitor {
                 Path changed = op.getModifyPath();
                 FileState newState = FileState.getFileInfo(changed);
                 if (newState != null) {
-                    for (List<Long> offsets : Lists.partition(op.getModifiedOffsets(), MAX_OFFSETS_SIZE)) {
+                    Iterator<List<Long>> iterator = Lists.partition(op.getModifiedOffsets(), MAX_OFFSETS_SIZE).iterator();
+                    while (iterator.hasNext()) {
                         log.info(String.format("Op %s is %.3f s old\n", op, System.nanoTime() / 1e9 - op.start));
-                        emitModify(producer, changed, newState.getFileSize(), offsets,
-                                newState.changedBlockContentEncoded(offsets));
+                        List<Long> offsets = iterator.next();
+
+                        if (!iterator.hasNext()) {
+                            emitModify(producer, changed, newState.getFileSize(), offsets,
+                                    newState.changedBlockContentEncoded(offsets), true);
+                        } else {
+                            emitModify(producer, changed, newState.getFileSize(), offsets,
+                                    newState.changedBlockContentEncoded(offsets), false);
+                        }
+
                         monitorDao.put(newState.toJSON());
                     }
                 } else {
@@ -304,7 +313,7 @@ public class Monitor {
         }
     }
 
-    private void emitModify(JsonProducer producer, Path name, Long size, List<Long> fileState, List<String> changes) throws JsonProcessingException {
+    private void emitModify(JsonProducer producer, Path name, Long size, List<Long> fileState, List<String> changes, Boolean isLast) throws JsonProcessingException {
         List<Long> fileStateResult = new LinkedList<>();
         List<String> changesResult = new LinkedList<>();
 
@@ -315,8 +324,18 @@ public class Monitor {
             fileStateResult.addAll(fileStateIterator.next());
             changesResult.addAll(changesIterator.next());
 
-            producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
-                    new Modify(root.relativize(name), size, fileStateResult, changesResult));
+            if (isLast) {
+                if (!(fileStateIterator.hasNext() && changesIterator.hasNext())) {
+                    producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
+                            new Modify(root.relativize(name), size, fileStateResult, changesResult, true));
+                } else  {
+                    producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
+                            new Modify(root.relativize(name), size, fileStateResult, changesResult, false));
+                }
+            } else {
+                producer.send(Config.getMonitorTopic(volumeName), order.messageKey(root, name),
+                        new Modify(root.relativize(name), size, fileStateResult, changesResult, false));
+            }
 
             fileStateResult.clear();
             changesResult.clear();

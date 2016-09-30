@@ -15,20 +15,23 @@ public class Modify implements Message {
     private Long fileSize;
     private List<Long> changedBlocks;
     private List<String> changedBlocksContent;
+    private Boolean isLast;
 
-    public Modify(Path name, Long fileSize, List<Long> changedBlocks, List<String> changedBlocksContent) {
-        this(name.toString(), fileSize, changedBlocks, changedBlocksContent);
+    public Modify(Path name, Long fileSize, List<Long> changedBlocks, List<String> changedBlocksContent, Boolean isLast) {
+        this(name.toString(), fileSize, changedBlocks, changedBlocksContent, isLast);
     }
 
     @JsonCreator
     public Modify(@JsonProperty("name") String name,
                   @JsonProperty("size") Long fileSize,
                   @JsonProperty("changes") List<Long> changedBlocks,
-                  @JsonProperty("changesContent") List<String> changedBlocksContent) {
+                  @JsonProperty("changesContent") List<String> changedBlocksContent,
+                  @JsonProperty("isLast") Boolean isLast) {
         this.name = name;
         this.fileSize = fileSize;
         this.changedBlocks = changedBlocks;
         this.changedBlocksContent = changedBlocksContent;
+        this.isLast = isLast;
     }
 
     public String getName() {
@@ -61,6 +64,14 @@ public class Modify implements Message {
 
     public void setChangedBlocksContent(List<String> changedBlocksContent) {
         this.changedBlocksContent = changedBlocksContent;
+    }
+
+    public Boolean isLast() {
+        return isLast;
+    }
+
+    public void setLast(Boolean last) {
+        isLast = last;
     }
 
     @Override
