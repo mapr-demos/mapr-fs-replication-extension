@@ -51,7 +51,15 @@ public class Gateway {
                 }
                 ConsumerRecords<String, String> records = consumer.poll(200);
                 for (ConsumerRecord<String, String> record : records) {
-                    log.info(volumeName + ": " + record);
+                    log.info(String.format("volumeName : %s (topic = %s, partition = %s, offset = %s, timestamp = %s, producer = %s, key = %s)",
+                            volumeName,
+                            record.topic(),
+                            record.partition(),
+                            record.offset(),
+                            record.timestamp(),
+                            record.producer(),
+                            record.key())
+                    );
                     Event event = factory.parseEvent(record.value());
                     if (event != null) {
                         event.execute(record.key());

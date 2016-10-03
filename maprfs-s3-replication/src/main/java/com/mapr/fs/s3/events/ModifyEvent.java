@@ -18,11 +18,13 @@ public class ModifyEvent extends S3Event {
     @Override
     public void execute(String volumePath) throws IOException {
         Modify modifyMessage = (Modify) message;
-        String filePath = volumePath + "/" + modifyMessage.getName();
-        Path path = Paths.get(filePath);
-        log.info("send file to S3");
-        this.sendFile(bucket, path);
 
+        if (modifyMessage.isLast()) {
+            String filePath = volumePath + "/" + modifyMessage.getName();
+            Path path = Paths.get(filePath);
+            log.info("send file to S3");
+            this.sendFile(bucket, path);
+        }
     }
 
     public String getFileName() {
