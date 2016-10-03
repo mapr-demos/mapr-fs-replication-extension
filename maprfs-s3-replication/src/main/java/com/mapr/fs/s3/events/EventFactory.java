@@ -42,6 +42,7 @@ public class EventFactory {
         if (message instanceof Create) {
             if (pluginConfiguration.isCreateEnabled()) {
                 return new CreateEvent(message,
+                        pluginConfiguration.getVolumeName(),
                         pluginConfiguration.getBucketName(),
                         pluginConfiguration.getAccessKey(),
                         pluginConfiguration.getSecretKey()
@@ -53,6 +54,7 @@ public class EventFactory {
         } else if (message instanceof Delete) {
             if (pluginConfiguration.isDeleteEnabled()) {
                 return new DeleteEvent(message,
+                        pluginConfiguration.getVolumeName(),
                         pluginConfiguration.getBucketName(),
                         pluginConfiguration.getAccessKey(),
                         pluginConfiguration.getSecretKey()
@@ -64,6 +66,7 @@ public class EventFactory {
         } else if (message instanceof Modify) {
             if (pluginConfiguration.isModifyEnabled()) {
                 return new ModifyEvent(message,
+                        pluginConfiguration.getVolumeName(),
                         pluginConfiguration.getBucketName(),
                         pluginConfiguration.getAccessKey(),
                         pluginConfiguration.getSecretKey()

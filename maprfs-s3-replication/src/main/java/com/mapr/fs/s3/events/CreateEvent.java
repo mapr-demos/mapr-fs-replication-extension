@@ -12,8 +12,8 @@ import java.nio.file.Paths;
 public class CreateEvent extends S3Event {
 
 
-    public CreateEvent(Message message, String bucket, String accessKey, String secretKey) {
-        super(message, bucket, accessKey, secretKey);
+    public CreateEvent(Message message, String volumeName, String bucket, String accessKey, String secretKey) {
+        super(message, bucket, volumeName, accessKey, secretKey);
     }
 
     @Override

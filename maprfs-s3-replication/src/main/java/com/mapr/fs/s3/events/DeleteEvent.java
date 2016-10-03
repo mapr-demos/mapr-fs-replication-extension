@@ -9,8 +9,8 @@ import java.io.IOException;
 @Slf4j
 public class DeleteEvent extends S3Event {
 
-    public DeleteEvent(Message message, String bucket, String accessKey, String secretKey) {
-        super(message, bucket, accessKey, secretKey);
+    public DeleteEvent(Message message, String volumeName, String bucket, String accessKey, String secretKey) {
+        super(message, bucket, volumeName,  accessKey, secretKey);
     }
 
     @Override

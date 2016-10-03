@@ -11,8 +11,8 @@ import java.nio.file.Paths;
 @Slf4j
 public class ModifyEvent extends S3Event {
 
-    public ModifyEvent(Message message, String bucket, String accessKey, String secretKey) {
-        super(message, bucket, accessKey, secretKey);
+    public ModifyEvent(Message message, String volumeName, String bucket, String accessKey, String secretKey) {
+        super(message, bucket, volumeName, accessKey, secretKey);
     }
 
     @Override

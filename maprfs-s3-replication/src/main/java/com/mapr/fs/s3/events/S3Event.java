@@ -21,12 +21,14 @@ public abstract class S3Event implements Event {
 
     Message message;
     String bucket;
+    String volumeName;
 
     private AmazonS3 s3client;
 
-    public S3Event(Message message, String bucket, String accessKey, String secretKey) {
+    public S3Event(Message message, String bucket, String volumeName, String accessKey, String secretKey) {
         this.message = message;
         this.bucket = bucket;
+        this.volumeName = volumeName;
         AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
         this.s3client = new AmazonS3Client(credentials);
     }
@@ -38,11 +40,10 @@ public abstract class S3Event implements Event {
             log.info("Uploading a new object to S3 from a file\n");
             File file = new File(pathToFile);
 
-            if (pathToFile.startsWith("/")) {
-                pathToFile = pathToFile.substring(1);
-            }
+            String pathToFileinS3 = getPathToFile(pathToFile, volumeName);
+            log.info("Path to File in s3: " + pathToFileinS3);
 
-            s3client.putObject(new PutObjectRequest(bucket, pathToFile, file));
+            s3client.putObject(new PutObjectRequest(bucket, pathToFileinS3, file));
         } catch (AmazonServiceException ase) {
             logAmazonServerExceptionInfo(ase);
         } catch (AmazonClientException ace) {
@@ -57,13 +58,16 @@ public abstract class S3Event implements Event {
                 folder = folder.substring(1);
             }
 
+            String pathToFileinS3 = getPathToFile(folder, volumeName);
+            log.info("Path to File in s3: " + pathToFileinS3);
+
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(0);
             // create empty content
             InputStream emptyContent = new ByteArrayInputStream(new byte[0]);
             log.info("Uploading a new object to S3 from a file\n");
             // create a PutObjectRequest passing the folder name suffixed by /
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, folder + "/", emptyContent, metadata);
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, pathToFileinS3 + "/", emptyContent, metadata);
             s3client.putObject(putObjectRequest);
 
         } catch (AmazonServiceException ase) {
@@ -83,9 +87,12 @@ public abstract class S3Event implements Event {
                 object = object.substring(1);
             }
 
+            String pathToFileinS3 = getPathToFile(object, volumeName);
+            log.info("Path to File in s3: " + pathToFileinS3);
+
             log.info("Delete Object " + object);
             // recursive delete
-            for (S3ObjectSummary file : s3client.listObjects(bucket, object).getObjectSummaries()) {
+            for (S3ObjectSummary file : s3client.listObjects(bucket, pathToFileinS3).getObjectSummaries()) {
                 s3client.deleteObject(bucket, file.getKey());
             }
 
@@ -116,6 +123,11 @@ public abstract class S3Event implements Event {
         log.info("AWS Error Code:   " + ase.getErrorCode());
         log.info("Error Type:       " + ase.getErrorType());
         log.info("Request ID:       " + ase.getRequestId());
+    }
+
+    private String getPathToFile(String path, String volumeName) {
+        int start = path.indexOf(volumeName);
+        return path.substring(start);
     }
 
 }
