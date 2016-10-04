@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.mapr.fs.application.Monitor;
 import com.mapr.fs.events.SimEvent;
+import com.mapr.fs.utils.MapperUtil;
 import junit.framework.TestCase;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -63,7 +64,7 @@ public class MonitorTest extends TestCase {
             // subsequent delete should hang and block the following modify as well
             List<ProducerRecord<String, String>> history = ((MockProducer<String, String>) producer.getActualProducer()).history();
             assertEquals(1, history.size());
-            JsonNode v = Util.getObjectMapper().readTree(history.get(0).value());
+            JsonNode v = MapperUtil.getObjectMapper().readTree(history.get(0).value());
             assertEquals("change", v.get("type").asText());
             assertEquals(f.toString(), v.get("name").asText());
         } finally {
@@ -117,7 +118,7 @@ public class MonitorTest extends TestCase {
             history = ((MockProducer<String, String>) producer.getActualProducer()).history();
             assertEquals(3, history.size());
 
-            ObjectMapper mapper = Util.getObjectMapper();
+            ObjectMapper mapper = MapperUtil.getObjectMapper();
             String[] types = {"create", "change", "change"};
             for (int i = 0; i < 3; i++) {
                 assertEquals(Config.getMonitorTopic("/fsmonitor:change_test"), history.get(i).topic());
@@ -168,7 +169,7 @@ public class MonitorTest extends TestCase {
             List<ProducerRecord<String, String>> history = ((MockProducer<String, String>) producer.getActualProducer()).history();
             assertEquals(4, history.size());
 
-            ObjectMapper mapper = Util.getObjectMapper();
+            ObjectMapper mapper = MapperUtil.getObjectMapper();
             String[] types = {"create", "change", "rename_from", "rename_to"};
             String[] keys = {f1.toString(), f1.toString(), f1.toString(), f2.toString()};
             for (int i = 0; i < 3; i++) {

@@ -1,6 +1,6 @@
 package com.mapr.fs.application;
 
-import com.mapr.fs.Util;
+import com.mapr.fs.utils.ConfigUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.ParseException;
 import org.apache.log4j.BasicConfigurator;
@@ -19,7 +19,7 @@ public class ApplicationStarter {
     public static void main(String[] args) throws ParseException {
         BasicConfigurator.configure();
         try {
-            Util.setConfigPath(args);
+            ConfigUtil.setConfigPath(args);
             start(args);
         } catch (Exception ex) {
             log.error(ex.toString());

@@ -12,6 +12,7 @@ import com.mapr.fs.events.FileOperationNotification;
 import com.mapr.fs.events.RealEvent;
 import com.mapr.fs.events.SimEvent;
 import com.mapr.fs.messages.Message;
+import com.mapr.fs.utils.MapperUtil;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.io.FileOutputStream;
@@ -103,8 +104,8 @@ public class MessagePlayer {
         }
     }
 
-    public static <T> T expand(JsonNode in, Class<T> cl, String ... var) {
-        ObjectMapper mapper = Util.getObjectMapper();
+    public static <T> T expand(JsonNode in, Class<T> cl, String... var) {
+        ObjectMapper mapper = MapperUtil.getObjectMapper();
         return mapper.convertValue(expandStrings(mapper, in, var), cl);
     }
 

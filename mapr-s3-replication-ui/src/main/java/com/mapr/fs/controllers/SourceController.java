@@ -3,6 +3,7 @@ package com.mapr.fs.controllers;
 import com.mapr.fs.dao.S3PluginDao;
 import com.mapr.fs.dao.dto.PluginConfigurationDTO;
 import com.mapr.fs.dao.dto.SourceDTO;
+import com.mapr.fs.service.CreateBucketService;
 import org.apache.log4j.Logger;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,8 @@ public class SourceController {
             @RequestParam("modifying") Boolean modifying,
             @RequestParam("moving") Boolean moving
     ) throws IOException {
+
+        new CreateBucketService().createBucket(bucket);
 
         PluginConfigurationDTO configuration =
                 new PluginConfigurationDTO(volume, creating, deleting, modifying, moving);

@@ -2,7 +2,7 @@ package com.mapr.fs.s3;
 
 import com.mapr.fs.Config;
 import com.mapr.fs.PluginConfiguration;
-import com.mapr.fs.Util;
+import com.mapr.fs.utils.ConfigUtil;
 import com.mapr.fs.dao.S3PluginDao;
 import com.mapr.fs.dao.dto.SourceDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class S3Replicator {
         // Load configuration for S3 : bucket, volumes, ....
         // TODO : move from configuration to DB+API
         BasicConfigurator.configure();
-        Util.setConfigPath(args);
+        ConfigUtil.setConfigPath(args);
         Config conf = new Config("s3.");
         Properties properties = conf.getProperties();
 

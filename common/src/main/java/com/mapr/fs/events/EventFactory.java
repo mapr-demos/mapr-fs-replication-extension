@@ -1,8 +1,8 @@
 package com.mapr.fs.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mapr.fs.Util;
 import com.mapr.fs.messages.*;
+import com.mapr.fs.utils.MapperUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -11,7 +11,7 @@ import java.util.Map;
 @Slf4j
 public class EventFactory {
 
-    private final ObjectMapper mapper = Util.getObjectMapper();
+    private final ObjectMapper mapper = MapperUtil.getObjectMapper();
 
     public Event parseEvent(String data) throws IOException {
         Message message = mapper.readValue(data, Message.class);

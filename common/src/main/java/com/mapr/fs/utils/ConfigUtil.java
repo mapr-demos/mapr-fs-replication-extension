@@ -1,22 +1,13 @@
-package com.mapr.fs;
+package com.mapr.fs.utils;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mapr.fs.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 
 import java.io.File;
 
 @Slf4j
-public class Util {
-
-    public static ObjectMapper getObjectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-        mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-        return mapper;
-    }
+public class ConfigUtil {
 
     public static void setConfigPath(String[] args) throws ParseException {
         try {

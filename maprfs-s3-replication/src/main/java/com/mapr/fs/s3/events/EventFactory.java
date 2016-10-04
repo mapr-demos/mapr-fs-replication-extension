@@ -1,7 +1,7 @@
 package com.mapr.fs.s3.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mapr.fs.Util;
+import com.mapr.fs.utils.MapperUtil;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.messages.*;
 import com.mapr.fs.PluginConfiguration;
@@ -13,7 +13,7 @@ import java.util.Map;
 @Slf4j
 public class EventFactory {
 
-    private final ObjectMapper mapper = Util.getObjectMapper();
+    private final ObjectMapper mapper = MapperUtil.getObjectMapper();
     private final PluginConfiguration pluginConfiguration;
 
     public EventFactory(PluginConfiguration pluginConfiguration) {

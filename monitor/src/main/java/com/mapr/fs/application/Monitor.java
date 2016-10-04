@@ -8,6 +8,7 @@ import com.mapr.fs.dao.MonitorDAO;
 import com.mapr.fs.dao.VolumeDAO;
 import com.mapr.fs.dao.dto.MonitorDTO;
 import com.mapr.fs.messages.*;
+import com.mapr.fs.utils.ConfigUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.ParseException;
 import org.apache.log4j.BasicConfigurator;
@@ -380,7 +381,7 @@ public class Monitor {
         BasicConfigurator.configure();
 
         try {
-            Util.setConfigPath(args);
+            ConfigUtil.setConfigPath(args);
             Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
             VolumeDAO dao = new VolumeDAO();
 

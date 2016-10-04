@@ -1,7 +1,7 @@
 package com.mapr.fs.application;
 
 import com.mapr.fs.Config;
-import com.mapr.fs.Util;
+import com.mapr.fs.utils.ConfigUtil;
 import com.mapr.fs.dao.ClusterDAO;
 import com.mapr.fs.dao.VolumeStatusDao;
 import com.mapr.fs.dao.dto.FileStatusDto;
@@ -95,7 +95,7 @@ public class Consumer {
         BasicConfigurator.configure();
 
         try {
-            Util.setConfigPath(args);
+            ConfigUtil.setConfigPath(args);
             Set<String> volumes = Collections.synchronizedSet(new HashSet<String>());
             ClusterDAO dao = new ClusterDAO();
 

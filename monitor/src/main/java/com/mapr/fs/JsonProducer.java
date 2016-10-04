@@ -3,6 +3,7 @@ package com.mapr.fs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
+import com.mapr.fs.utils.MapperUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -20,7 +21,7 @@ import java.util.Properties;
 public class JsonProducer {
 
     protected final Producer<String, String> delegate;
-    private final ObjectMapper mapper = com.mapr.fs.Util.getObjectMapper();
+    private final ObjectMapper mapper = MapperUtil.getObjectMapper();
     private Config config;
 
     public JsonProducer() throws IOException {

@@ -6,7 +6,9 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.mapr.fs.events.Event;
 import com.mapr.fs.messages.Message;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
+
+import static com.mapr.fs.utils.AmazonS3Util.logAmazonClientExceptionInfo;
+import static com.mapr.fs.utils.AmazonS3Util.logAmazonServerExceptionInfo;
 
 @Slf4j
 public abstract class S3Event implements Event {
@@ -102,27 +107,6 @@ public abstract class S3Event implements Event {
         } catch (AmazonClientException ace) {
             logAmazonClientExceptionInfo(ace);
         }
-    }
-
-    private void logAmazonClientExceptionInfo(AmazonClientException ace) {
-        log.info("Caught an AmazonClientException, which " +
-                "means the client encountered " +
-                "an internal error while trying to " +
-                "communicate with S3, " +
-                "such as not being able to access the network.");
-        log.info("Error Message: " + ace.getMessage());
-    }
-
-    private void logAmazonServerExceptionInfo(AmazonServiceException ase) {
-        log.info("Caught an AmazonServiceException, which " +
-                "means your request made it " +
-                "to Amazon S3, but was rejected with an error response" +
-                " for some reason.");
-        log.info("Error Message:    " + ase.getMessage());
-        log.info("HTTP Status Code: " + ase.getStatusCode());
-        log.info("AWS Error Code:   " + ase.getErrorCode());
-        log.info("Error Type:       " + ase.getErrorType());
-        log.info("Request ID:       " + ase.getRequestId());
     }
 
     private String getPathToFile(String path, String volumeName) {
