@@ -23,7 +23,7 @@ public class ModifyEvent extends S3Event {
             String filePath = volumePath + "/" + modifyMessage.getName();
             Path path = Paths.get(filePath);
             log.info("send file to S3");
-            this.sendFile(bucket, path);
+            this.sendFile(bucket, path, getFileName());
         }
     }
 

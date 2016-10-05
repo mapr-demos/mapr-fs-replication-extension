@@ -10,14 +10,13 @@ import java.io.IOException;
 public class DeleteEvent extends S3Event {
 
     public DeleteEvent(Message message, String volumeName, String bucket, String accessKey, String secretKey) {
-        super(message, bucket, volumeName,  accessKey, secretKey);
+        super(message, bucket, volumeName, accessKey, secretKey);
     }
 
     @Override
     public void execute(String volumePath) throws IOException {
         log.info("Delete object in S3");
-        String filePath = volumePath + "/" + ((Delete) message).getName();
-        this.deleteObject(bucket, filePath);
+        this.deleteObject(bucket, getFileName());
 
     }
 
