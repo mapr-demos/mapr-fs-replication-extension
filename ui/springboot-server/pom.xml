@@ -6,7 +6,7 @@
 	<name>swagger-springboot-server</name>
 	<version>1.0.0</version>
 	<properties>
-		<springfox-version>2.4.0</springfox-version>
+		<springfox-version>2.10.0</springfox-version>
 	</properties>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
